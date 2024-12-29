@@ -9,6 +9,19 @@ const subscriptions_table_1 = __importDefault(require("../model/subscriptions_ta
 const package_1 = require("../utils/package");
 const packages_table_1 = __importDefault(require("../model/packages_table"));
 class AuthService {
+    // find User
+    static async findUser(email) {
+        try {
+            const user = await users_models_1.default.findOne({
+                where: { email },
+            });
+            return user;
+        }
+        catch (err) {
+            throw new Error(`Error finding user: ${err.message}`);
+        }
+    }
+    // singup
     static async signup(name, email, password, tierName) {
         try {
             const selectedTier = (0, package_1.getTierByName)(tierName);
@@ -49,13 +62,14 @@ class AuthService {
                 return {
                     message: "User created successfully with free tier",
                     userId: user.id,
+                    subscription: true,
                 };
             }
             else {
-                // If the selected tier is not free, only create the user
                 return {
                     message: `User created successfully. Selected tier: ${selectedTier.title}. Subscription required.`,
                     userId: user.id,
+                    subscription: false,
                 };
             }
         }

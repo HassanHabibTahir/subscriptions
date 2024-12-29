@@ -63,6 +63,10 @@ User.init({
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: true,
     },
+    paymentSessionId: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
+    },
     forget_password_code: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: true,

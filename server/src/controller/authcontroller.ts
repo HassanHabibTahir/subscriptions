@@ -3,10 +3,15 @@ import User from "../model/users_models";
 import SubscriptionService from "../services/subscriptionServuce";
 import { AuthService } from "../services/AuthService";
 class AuthController {
-  async signup(req: Request, res: Response) {
+
+   async signup(req: Request, res: Response) {
     try {
-      console.log(req.body,"req.body");
+      console.log(req.body, "req.body");
       const { name, email, password, tier } = req.body;
+      const user = await AuthService.findUser(email);
+      if (user) {
+        return res.status(400).json({ error: "Email already exists" });
+      }
       const result = await AuthService.signup(name, email, password, tier);
       res.status(201).json(result);
     } catch (error) {
@@ -15,4 +20,4 @@ class AuthController {
   }
 }
 
-export default new AuthController();
+export default   AuthController;

@@ -23,6 +23,7 @@ class User extends Model {
   public last_login!: Date;
   public created_at!: Date;
   public updated_at!: Date;
+  public paymentSessionId!: string;
 }
 
 User.init(
@@ -80,6 +81,10 @@ User.init(
     },
     package_id: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    paymentSessionId:{
+      type: DataTypes.STRING,
       allowNull: true,
     },
     forget_password_code: {

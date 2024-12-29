@@ -4,6 +4,20 @@ import { getTierByName } from "../utils/package";
 import PackageTable from "../model/packages_table";
 
 export class AuthService {
+  // find User
+  static async findUser(email: string) {
+    try {
+      const user = await User.findOne({
+        where: { email },
+      });
+      return user;
+    } catch (err) {
+      throw new Error(`Error finding user: ${err.message}`);
+    }
+  }
+
+
+  // singup
   static async signup(
     name: string,
     email: string,
@@ -53,12 +67,13 @@ export class AuthService {
         return {
           message: "User created successfully with free tier",
           userId: user.id,
+          subscription: true,
         };
       } else {
-        // If the selected tier is not free, only create the user
         return {
           message: `User created successfully. Selected tier: ${selectedTier.title}. Subscription required.`,
           userId: user.id,
+          subscription: false,
         };
       }
     } catch (error: any) {

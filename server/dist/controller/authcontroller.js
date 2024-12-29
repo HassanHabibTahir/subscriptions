@@ -6,6 +6,10 @@ class AuthController {
         try {
             console.log(req.body, "req.body");
             const { name, email, password, tier } = req.body;
+            const user = await AuthService_1.AuthService.findUser(email);
+            if (user) {
+                return res.status(400).json({ error: "Email already exists" });
+            }
             const result = await AuthService_1.AuthService.signup(name, email, password, tier);
             res.status(201).json(result);
         }
@@ -14,4 +18,4 @@ class AuthController {
         }
     }
 }
-exports.default = new AuthController();
+exports.default = AuthController;

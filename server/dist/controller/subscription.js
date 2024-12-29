@@ -4,10 +4,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const subscriptionServuce_1 = __importDefault(require("../services/subscriptionServuce"));
+const package_1 = require("../utils/package");
 class SubscriptionController {
     async createPackage(req, res) {
         try {
-            const newPackage = await subscriptionServuce_1.default.createPackage(req.body);
+            const { tierName, email, condition } = req.body;
+            console.log(tierName, email, "email,tireName");
+            const selectedTier = await (0, package_1.getTierByName)(tierName);
+            const priceId = await (0, package_1.getPriceId)(tierName, condition);
+            const newPackage = await subscriptionServuce_1.default.createPackage({ ...selectedTier, email, condition, priceId });
             res.status(201).json(newPackage);
         }
         catch (error) {
@@ -16,51 +21,27 @@ class SubscriptionController {
     }
     async getPackages(req, res) {
         try {
-            const packages = await subscriptionServuce_1.default.getPackages();
+            const sessionId = req.query.session_id;
+            const packages = await subscriptionServuce_1.default.getPackages(sessionId);
             res.status(200).json(packages);
         }
         catch (error) {
             res.status(500).json({ error: error.message });
         }
     }
-    async createSubscription(req, res) {
-        try {
-            const newSubscription = await subscriptionServuce_1.default.createSubscription(req.body);
-            res.status(201).json(newSubscription);
-        }
-        catch (error) {
-            res.status(500).json({ error: error.message });
-        }
-    }
-    async getUserSubscription(req, res) {
-        try {
-            const userId = parseInt(req.params.userId);
-            const subscription = await subscriptionServuce_1.default.getUserSubscription(userId);
-            res.status(200).json(subscription);
-        }
-        catch (error) {
-            res.status(500).json({ error: error.message });
-        }
-    }
-    async updateUserSubscription(req, res) {
-        try {
-            const userId = parseInt(req.params.userId);
-            const updatedSubscription = await subscriptionServuce_1.default.updateUserSubscription(userId, req.body);
-            res.status(200).json(updatedSubscription);
-        }
-        catch (error) {
-            res.status(500).json({ error: error.message });
-        }
+    async webhook(req, res) {
+        const response = await subscriptionServuce_1.default.webhook(req, res);
+        res.status(response.status).json(response.body);
     }
     async cancelSubscription(req, res) {
         try {
-            const userId = parseInt(req.params.userId);
-            const cancelledSubscription = await subscriptionServuce_1.default.cancelSubscription(userId);
-            res.status(200).json(cancelledSubscription);
+            const { userId } = req.body;
+            const result = await subscriptionServuce_1.default.cancelSubscription(userId);
+            res.json(result);
         }
         catch (error) {
             res.status(500).json({ error: error.message });
         }
     }
 }
-exports.default = new SubscriptionController();
+exports.default = SubscriptionController;

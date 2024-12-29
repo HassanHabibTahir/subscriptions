@@ -1,10 +1,16 @@
 import { Request, Response } from 'express';
 import SubscriptionService from '../services/subscriptionServuce';
+import { getPriceId, getTierByName } from '../utils/package';
 
 class SubscriptionController {
   async createPackage(req: Request, res: Response) {
     try {
-      const newPackage = await SubscriptionService.createPackage(req.body);
+     const {tierName, email,condition} = req.body;
+     console.log(tierName, email , "email,tireName");
+      const selectedTier = await getTierByName(tierName);
+      const priceId = await  getPriceId(tierName,condition);
+      const newPackage = await SubscriptionService.createPackage({...selectedTier,email,condition,priceId});
+     
       res.status(201).json(newPackage);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -13,52 +19,36 @@ class SubscriptionController {
 
   async getPackages(req: Request, res: Response) {
     try {
-      const packages = await SubscriptionService.getPackages();
+      const sessionId =  req.query.session_id
+      const packages = await SubscriptionService.getPackages(sessionId);
       res.status(200).json(packages);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   }
 
-  async createSubscription(req: Request, res: Response) {
-    try {
-      const newSubscription = await SubscriptionService.createSubscription(req.body);
-      res.status(201).json(newSubscription);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
+
+  async webhook(req:Request,res:Response){
+ const  response = await SubscriptionService.webhook(req,res);
+ res.status(response.status).json(response.body);
+
   }
 
-  async getUserSubscription(req: Request, res: Response) {
-    try {
-      const userId = parseInt(req.params.userId);
-      const subscription = await SubscriptionService.getUserSubscription(userId);
-      res.status(200).json(subscription);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  }
-
-  async updateUserSubscription(req: Request, res: Response) {
-    try {
-      const userId = parseInt(req.params.userId);
-      const updatedSubscription = await SubscriptionService.updateUserSubscription(userId, req.body);
-      res.status(200).json(updatedSubscription);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  }
 
   async cancelSubscription(req: Request, res: Response) {
     try {
-      const userId = parseInt(req.params.userId);
-      const cancelledSubscription = await SubscriptionService.cancelSubscription(userId);
-      res.status(200).json(cancelledSubscription);
+      const {userId} = req.body;
+      const result =  await SubscriptionService.cancelSubscription(userId);
+      res.json(result);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   }
+
+
+
+
 }
 
-export default new SubscriptionController();
+export default  SubscriptionController;
 
