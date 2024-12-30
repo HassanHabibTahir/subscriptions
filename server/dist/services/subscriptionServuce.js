@@ -41,7 +41,7 @@ class SubscriptionService {
                 payment_plane: data.condition,
                 membership_type: data.package_reference,
             });
-            return session;
+            return { url: session?.url, id: session.id };
         }
         catch (error) {
             throw new Error(`Error creating subscription: ${error.message}`);

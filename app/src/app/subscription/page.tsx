@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -11,24 +11,28 @@ const packages = [
     name: 'Starter',
     price: 0,
     features: ['Basic access', 'Limited storage', 'Email support'],
+    package_reference: "starter_tier",
   },
   {
     name: 'Enthusiast',
     monthlyPrice: 19.99,
     yearlyPrice: 199.99,
     features: ['Full access', 'Increased storage', 'Priority email support', 'Monthly newsletter'],
+    package_reference: "enthusiast_tier",
   },
   {
     name: 'Collector',
     monthlyPrice: 39.99,
     yearlyPrice: 399.99,
     features: ['Premium access', 'Unlimited storage', '24/7 phone support', 'Exclusive events', 'Quarterly gifts'],
+    package_reference: "collector_tier",
   },
   {
     name: 'Elite',
     monthlyPrice: 79.99,
     yearlyPrice: 799.99,
     features: ['VIP access', 'Unlimited storage', 'Dedicated account manager', 'Private events', 'Monthly rare item'],
+    package_reference: "elite_tier",
   },
 ]
 
@@ -37,11 +41,55 @@ export default function SubscriptionPage() {
     Enthusiast: false,
     Collector: false,
     Elite: false,
+    
   })
+  const [email, setEmail] = useState("");
 
   const togglePlan = (planName: string) => {
     setYearlyPlans(prev => ({ ...prev, [planName]: !prev[planName] }))
   }
+
+  const handleSubscription = async (tierName: string, email: string, isYearly: boolean) => {
+    const payload = {
+      tierName,
+      email,
+      condition: isYearly ? 'yearly' : 'monthly',
+    }
+
+    try {
+      console.log(payload,"payload")
+      const response = await fetch('http://localhost:4000/api/subscription/packages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      console.log('Subscription response:', data)
+      if (data.url) {
+        // Redirect to the provided URL
+        window.location.href = data.url;
+      } else {
+        alert(data.message || 'Subscription successful!');
+      }
+      alert(data.message)
+    } catch (error) {
+      console.error('Subscription failed:', error)
+      alert('Subscription failed. Please try again.')
+    }
+  }
+  useEffect(() => {
+    const storedEmail = localStorage.getItem("userEmail");
+    if (storedEmail) {
+      setEmail(storedEmail);
+    } 
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -70,7 +118,7 @@ export default function SubscriptionPage() {
                     'Free'
                   ) : (
                     <>
-                    ${yearlyPlans[pkg.name] 
+                      ${yearlyPlans[pkg.name]
                         ? pkg.yearlyPrice?.toFixed(2) ?? 'N/A'
                         : pkg.monthlyPrice?.toFixed(2) ?? 'N/A'}
                       <span className="text-base font-normal text-gray-500">
@@ -114,7 +162,10 @@ export default function SubscriptionPage() {
                 )}
               </CardContent>
               <CardFooter>
-                <Button className="w-full">
+                <Button
+                  className="w-full"
+                  onClick={() => handleSubscription(pkg.package_reference, email, yearlyPlans[pkg.name])}
+                >
                   {pkg.price === 0 ? 'Start for Free' : `Subscribe to ${pkg.name}`}
                 </Button>
               </CardFooter>
@@ -125,4 +176,3 @@ export default function SubscriptionPage() {
     </div>
   )
 }
-
