@@ -4,13 +4,13 @@ const AuthService_1 = require("../services/AuthService");
 class AuthController {
     async signup(req, res) {
         try {
-            console.log(req.body, "req.body");
-            const { name, email, password, tier } = req.body;
-            const user = await AuthService_1.AuthService.findUser(email);
+            const body = req.body;
+            console.log(body, "body");
+            const user = await AuthService_1.AuthService.findUser(body?.email);
             if (user) {
                 return res.status(400).json({ error: "Email already exists" });
             }
-            const result = await AuthService_1.AuthService.signup(name, email, password, tier);
+            const result = await AuthService_1.AuthService.signup(body);
             res.status(201).json(result);
         }
         catch (error) {

@@ -5,11 +5,14 @@ import cors from "cors";
 import sequelize from "./sequelize";
 import subscriptionRoutes from "./routes/subscriptionRoution";
 import authRoutes from "./routes/authRoutes";
+import bodyParser from "body-parser";
+
 const app: any = express();
+
+app.use('/api/subscription/webhook', bodyParser.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
-
 
 
 app.use('/api/subscription', subscriptionRoutes);

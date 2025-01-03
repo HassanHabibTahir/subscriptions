@@ -4,17 +4,27 @@ const router = express.Router();
 const subscription = new SubscriptionController();
 router.post('/packages', subscription.createPackage.bind(subscription));
 router.get('/success', subscription.getPackages.bind(subscription));
-router.delete('/cancel', subscription.cancelSubscription.bind(subscription));
+// cancel subscription menul with api
+router.post('/cancel-subscription', subscription.cancelSubscription.bind(subscription));
+
+// upgrade subscription
+router.post('/upgrade-subscription', subscription.upgradeSubscription.bind(subscription));
+
+// downgrade subscription
+router.post('/downgrade-subscription', subscription.downgradeSubscription.bind(subscription));
+
+// cancel response from the stripe
+router.get('/cancel', subscription.stripeCancelSubscription.bind(subscription));
+
+
 router.post(
     "/webhook",
-    express.raw({ type: "application/json" }),
+    express.raw({ type: 'application/json' }),
     subscription.webhook.bind(subscription)
 
   );
   
-// router.post('/subscriptions/paid', SubscriptionController.createSubscription);
-// router.get('/subscriptions/:userId', SubscriptionController.getUserSubscription);
-// router.put('/subscriptions/:userId', SubscriptionController.updateUserSubscription);
+
 
 export default router;
 

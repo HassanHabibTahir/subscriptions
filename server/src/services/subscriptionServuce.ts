@@ -1,3 +1,4 @@
+
 import Subscription from "../model/subscriptions_table";
 import User from "../model/users_models";
 import { stripe } from "../utils/stripe";
@@ -52,7 +53,7 @@ class SubscriptionService {
         payment_plane: data.condition,
         membership_type: data.package_reference,
       });
-      return {url:session?.url,id:session.id};
+      return { url: session?.url, id: session.id };
     } catch (error) {
       throw new Error(`Error creating subscription: ${error.message}`);
     }
@@ -78,10 +79,6 @@ class SubscriptionService {
       // Get selected tier and calculate expiration date
       const selectedTier = await getTierByName(user.membership_type);
       const expiresAt = await calculateExpirationDate(user.payment_plane);
-      const { monthlyPrice, yearlyPrice, monthlyPriceId, yearlyPriceId } =
-        await extractSubscriptionDetails(lineItems.data);
-      const subscriptionType = user.payment_plane;
-
       // Check if subscription already exists
       const existingSubscription = await Subscription.findOne({
         where: { user_id: user.id },
@@ -102,28 +99,6 @@ class SubscriptionService {
             where: { user_id: user.id },
           }
         );
-
-        // Update existing package table record
-        await PackageTable.update(
-          {
-            title: selectedTier.title,
-            per_month_charges:
-              subscriptionType === "monthly" ? monthlyPrice : 0,
-            yearly_per_month_charges:
-              subscriptionType === "yearly" ? yearlyPrice : 0,
-            package_subscriptionId: session.subscription,
-            monthly_sub_priceId:
-              subscriptionType === "monthly" ? monthlyPriceId : "",
-            yearly_sub_priceId:
-              subscriptionType === "yearly" ? yearlyPriceId : "",
-            package_reference: selectedTier.package_reference,
-            features: selectedTier.package_reference,
-          },
-          {
-            where: { user_id: user.id },
-          }
-        );
-
         return {
           message: "Subscription updated successfully",
           sessionId: session.id,
@@ -135,8 +110,8 @@ class SubscriptionService {
           user_id: user.id,
           email: user.email,
           package_title: selectedTier.title,
-          package_reference: selectedTier.package_reference,
-          package_id: selectedTier.package_id,
+          package_reference: user.membership_type,
+          package_id: user.package_id,
           subscription_id: session.subscription,
           mode: user?.payment_plane,
           expires_at: expiresAt,
@@ -144,22 +119,6 @@ class SubscriptionService {
           payment_status: session?.payment_status,
           status: "active",
         });
-
-        await PackageTable.create({
-          user_id: user.id,
-          title: selectedTier.title,
-          per_month_charges: subscriptionType === "monthly" ? monthlyPrice : 0,
-          yearly_per_month_charges:
-            subscriptionType === "yearly" ? yearlyPrice : 0,
-          package_subscriptionId: session.subscription,
-          monthly_sub_priceId:
-            subscriptionType === "monthly" ? monthlyPriceId : "",
-          yearly_sub_priceId:
-            subscriptionType === "yearly" ? yearlyPriceId : "",
-          package_reference: selectedTier.package_reference,
-          features: selectedTier.package_reference,
-        });
-
         return {
           message: "Subscription created successfully",
           sessionId: session.id,
@@ -171,118 +130,202 @@ class SubscriptionService {
       throw new Error(`Error fetching packages: ${error.message}`);
     }
   }
-    async webhook(req: any, res: any) {
-      const sig = req.headers["stripe-signature"];
 
-      if (!sig) {
-        return res.status(400).send("Missing stripe-signature header");
-      }
-
-      try {
-        const event = stripe.webhooks.constructEvent(
-          req.body,
-          sig,
-          process.env.STRIPE_WEBHOOK_SECRET!
-        );
-        console.log(event,"event");
-        if (event.type === "invoice.payment_succeeded") {
-          const invoice = event.data.object as Stripe.Invoice;
-    
-          if (invoice.billing_reason === "subscription_cycle" && invoice.subscription) {
-            console.log("Recurring subscription payment succeeded:", invoice);
-            await this.handleUpdateSubscription(invoice);
-          }
-        }
-    
-        return { status: 200, body: { received: true } };
-
-        // return res.json({ received: true });
-      } catch (error) {
-        console.error("Webhook error:", error);
-        return res.status(400).send(`Webhook Error: ${error.message}`);
-      }
-    }
-
-    private async handleUpdateSubscription(invoice: Stripe.Invoice) {
-      const subscriptionId = invoice.subscription as string;
-    
-      const subscription = await Subscription.findOne({
-        where: { subscription_id: subscriptionId },
-      });
-    
-      if (subscription) {
-        await subscription.update({
-          paid_amount: invoice.amount_paid / 100,
-          payment_status: "paid",
-          last_payment_date: new Date(),
-          expires_at: new Date(invoice.lines.data[0].period.end * 1000),
-        });
-    
-        console.log("Subscription updated:", {
-          subscription_id: subscriptionId,
-          paid_amount: invoice.amount_paid / 100,
-        });
-      } else {
-        console.error("Subscription not found for ID:", subscriptionId);
-      }
-    }
-
-
-
-  async cancelSubscription(userId: string) {
+  // cancelSubscriptionService
+  async cancelSubscription(subscription: any) {
     try {
-      // Find user's active subscription
-      const subscription = await Subscription.findOne({
-        where: {
-          user_id: userId,
-          status: 'active'
-        }
-      });
-
-      if (!subscription) {
-        throw new Error('No active subscription found');
-      }
-
-      // Cancel the subscription in Stripe
       const stripeSubscription = await stripe.subscriptions.update(
         subscription.subscription_id,
         {
-          cancel_at_period_end: false
+            cancel_at_period_end: false, 
           
         }
       );
-
-      // Update subscription in database
-      const updateData = {
-        status: 'cancelled',
-        cancellation_date: new Date(),
-        updated_at: new Date()
-      };
-  
-      await Promise.all([
-        Subscription.update(updateData, {
-          where: { subscription_id: subscription.subscription_id }
-        }),
-        PackageTable.update(
-          { status: 'inactive' },
-          { where: { package_subscriptionId: subscription.subscription_id } }
-        )
-      ]);
-
+      
+      await subscription.update({
+        status: "canceled",
+      });
       return {
-        message: 'Subscription cancelled successfully',
-        cancelDate: new Date()
+        message: "Subscription has been cancelled instantly.",
+        subscription: stripeSubscription,
       };
-
     } catch (error) {
-      console.error('Subscription cancellation error:', error);
-      throw new Error(`Failed to cancel subscription: ${error.message}`);
+      throw new Error(`Error fetching packages: ${error.message}`);
     }
   }
 
+// upgrde subscription
+ async upgradeSubscription(subscription,newPriceId){
+  try {
+    const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscription_id);
+    const updatedSubscription = await stripe.subscriptions.update(subscription.subscription_id, {
+      items: [
+        {
+          id: stripeSubscription.items.data[0].id,
+          price: newPriceId,
+        },
+      ],
+    });
+    return {
+      message: 'Subscription upgraded successfully',
+      subscription: updatedSubscription
+    };
+
+  } catch (error) {
+    throw new Error(`Error upgrading subscription: ${error.message}`);
+  }
+ }
+
+// downgrade subscription 
+async downgradeSubscription(subscription,newPriceId){
+  try {
+    const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscription_id);
+    const updatedSubscription = await stripe.subscriptions.update(subscription.subscription_id, {
+      items: [
+        {
+          id: stripeSubscription.items.data[0].id,
+          price: newPriceId,
+        },
+      ],
+    });
+    return {
+      message: 'Subscription downgraded successfully',
+      subscription: updatedSubscription
+    };
+
+  } catch (error) {
+    throw new Error(`Error downgrading subscription: ${error.message}`);
+  }
+  
+
+}
 
 
+  async webhook(req: any, res: any) {
+    const sig = req.headers["stripe-signature"];
 
+    if (!sig) {
+      return res.status(400).send("Missing stripe-signature header");
+    }
+    let event;
+    try {
+      try {
+        event = stripe.webhooks.constructEvent(
+          req.body,
+          sig,
+          process.env.STRIPE_WEBHOOK_SECRET
+        );
+      } catch (err) {
+        console.error(`Webhook Error: ${err.message}`);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+      }
+    } catch (error) {
+      console.log(error);
+      return res.status(400).json({ error: error });
+    }
+    try {
+      switch (event.type) {
+        case "customer.subscription.updated":
+          console.log("event.type", event.type);
+          console.log(
+            "customer.subscription.paused",
+            JSON.stringify(event.data.object)
+          );
+          await this.handleUpdateSubscriptionPauseOrResume(event.data.object);
+          break;
+        case "customer.subscription.deleted":
+          console.log("customer.subscription.deleted");
+          await this.handleSubscriptionCancelled(event.data.object);
+          break;
+        case "invoice.payment_succeeded":
+          console.log("invoice.payment_succeeded");
+
+          await this.handleInvoiceUpdateSubscription(event.data.object);
+          break;
+        default:
+          console.log(`Unhandled event type ${event.type}`);
+      }
+      return { status: 200, body: { received: true } };
+    } catch (error) {
+      console.error("Webhook error:", error);
+      return res.status(400).send(`Webhook Error: ${error.message}`);
+    }
+  }
+
+  // upgrade downgrade or pause  or resume
+  private async handleUpdateSubscriptionPauseOrResume(invoice) {
+    const subscriptionId = invoice?.id;
+    console.log(`updating subscription ${subscriptionId}`);
+
+    try {
+      // Retrieve the latest subscription info from Stripe
+      const stripeSubscription = await stripe.subscriptions.retrieve(
+        subscriptionId
+      );
+
+      // // Fetch subscription from the database
+      const subscription = await Subscription.findOne({
+        where: { subscription_id: subscriptionId },
+      });
+
+      const isPausedNow = stripeSubscription.pause_collection !== null;
+
+      let statusUpdate = isPausedNow ? "paused" : "active";
+
+      if (statusUpdate) {
+        await subscription.update({ status: statusUpdate });
+        console.log(`Subscription ${statusUpdate}:`, subscriptionId);
+      } else {
+        console.error("Subscription not found for ID:", subscriptionId);
+      }
+    } catch (error) {
+      console.error("Error handling subscription update:", error);
+    }
+  }
+
+  // renew subscription if cycle end
+
+  private async handleInvoiceUpdateSubscription(invoice: Stripe.Invoice) {
+    const subscriptionId = invoice.subscription as string;
+    const subscription = await Subscription.findOne({
+      where: { subscription_id: subscriptionId },
+    });
+    if (subscription) {
+      await subscription.update({
+        paid_amount: invoice.amount_paid / 100,
+        payment_status: "paid",
+        last_payment_date: new Date(),
+        expires_at: new Date(invoice.lines.data[0].period.end * 1000),
+      });
+
+      console.log("Subscription updated:", {
+        subscription_id: subscriptionId,
+        paid_amount: invoice.amount_paid / 100,
+      });
+    } else {
+      console.error("Subscription not found for ID:", subscriptionId);
+    }
+  }
+
+  // cancel subscription
+  private async handleSubscriptionCancelled(subscription) {
+    if (!subscription?.id) {
+      console.error("No subscription id found");
+      return;
+    }
+    const subscriptionRecord = await Subscription.findOne({
+      where: { subscription_id: subscription?.id },
+    });
+    if (subscriptionRecord) {
+      await subscriptionRecord.update({
+        status: "cancelled",
+        is_deleted: true,
+      });
+      console.log(`Subscription cancelled `);
+    } else {
+      console.error(`No subscription found`);
+    }
+  }
 }
 
 export default new SubscriptionService();

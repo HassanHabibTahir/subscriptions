@@ -28,6 +28,12 @@ exports.tiers = {
         package_id: 4,
         is_free: false,
     },
+    BASIC: {
+        title: "Basic Tier",
+        package_reference: "basic_tier",
+        package_id: 5,
+        is_free: true,
+    },
 };
 const getTierByName = (tierName) => {
     switch (tierName.toLowerCase()) {
@@ -39,6 +45,8 @@ const getTierByName = (tierName) => {
             return exports.tiers.COLLECTOR;
         case "elite_tier":
             return exports.tiers.ELITE;
+        case "basic_tier":
+            return exports.tiers.BASIC;
         default:
             throw new Error(`Unknown tier name: ${tierName}`);
     }
@@ -60,34 +68,53 @@ const getPriceId = (packageName, condition) => {
             monthly: process.env.PRICE_ID_ELITE_MONTHLY,
             yearly: process.env.PRICE_ID_ELITE_YEARLY,
         },
+        basic_tier: {
+            day: process.env.PRICE_ID_ONE_DAY,
+        },
     };
     return priceMap[packageName]?.[condition];
 };
 exports.getPriceId = getPriceId;
 function calculateExpirationDate(condition) {
     let expirationDate;
-    if (condition === 'monthly') {
+    if (condition === "monthly") {
         expirationDate = new Date(new Date().setMonth(new Date().getMonth() + 1));
     }
-    else if (condition === 'yearly') {
+    else if (condition === "yearly") {
         expirationDate = new Date(new Date().setFullYear(new Date().getFullYear() + 1));
+    }
+    else if (condition === "day") {
+        expirationDate = new Date(new Date().setDate(new Date().getDate() + 1));
     }
     return expirationDate;
 }
 function extractSubscriptionDetails(subscriptionItems) {
     let monthlyPrice = 0;
     let yearlyPrice = 0;
-    let monthlyPriceId = '';
-    let yearlyPriceId = '';
-    subscriptionItems.forEach(item => {
-        if (item.price.recurring.interval === 'month') {
+    let monthlyPriceId = "";
+    let yearlyPriceId = "";
+    let dayPrice = 0;
+    let dayPriceId = "";
+    subscriptionItems.forEach((item) => {
+        if (item.price.recurring.interval === "month") {
             monthlyPrice = item.amount_total / 100;
             monthlyPriceId = item.price.id;
         }
-        if (item.price.recurring.interval === 'year') {
+        if (item.price.recurring.interval === "year") {
             yearlyPrice = item.amount_total / 100;
             yearlyPriceId = item.price.id;
         }
+        if (item.price.recurring.interval === "day") {
+            dayPrice = item.amount_total / 100;
+            dayPriceId = item.price.id;
+        }
     });
-    return { monthlyPrice, yearlyPrice, monthlyPriceId, yearlyPriceId };
+    return {
+        monthlyPrice,
+        yearlyPrice,
+        monthlyPriceId,
+        yearlyPriceId,
+        dayPrice,
+        dayPriceId,
+    };
 }
