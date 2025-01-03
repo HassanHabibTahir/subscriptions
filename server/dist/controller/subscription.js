@@ -62,14 +62,14 @@ class SubscriptionController {
     // upgrade subscription
     async upgradeSubscription(req, res) {
         try {
-            const { userId, newPriceId } = req.body;
+            const { userId, newPriceId, package_reference } = req.body;
             const subscription = await subscriptions_table_1.default.findOne({
                 where: { user_id: userId },
             });
             if (!subscription) {
                 return res.status(404).json({ error: "Subscription not found" });
             }
-            const result = await subscriptionServuce_1.default.upgradeSubscription(subscription, newPriceId);
+            const result = await subscriptionServuce_1.default.upgradeSubscription(subscription, newPriceId, package_reference);
             res.json(result);
         }
         catch (error) {
@@ -79,14 +79,14 @@ class SubscriptionController {
     // downgrade subscription
     async downgradeSubscription(req, res) {
         try {
-            const { userId, newPriceId } = req.body;
+            const { userId, newPriceId, package_reference } = req.body;
             const subscription = await subscriptions_table_1.default.findOne({
                 where: { user_id: userId },
             });
             if (!subscription) {
                 return res.status(404).json({ error: "Subscription not found" });
             }
-            const result = await subscriptionServuce_1.default.downgradeSubscription(subscription, newPriceId);
+            const result = await subscriptionServuce_1.default.downgradeSubscription(subscription, newPriceId, package_reference);
             res.json(result);
         }
         catch (error) {

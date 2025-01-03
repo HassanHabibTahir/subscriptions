@@ -63,7 +63,7 @@ class SubscriptionController {
 // upgrade subscription
   async upgradeSubscription(req: Request, res: Response) {
     try {
-      const { userId ,newPriceId} = req.body;
+      const { userId ,newPriceId,package_reference} = req.body;
       const subscription = await Subscription.findOne({
         where: { user_id: userId },
       });
@@ -74,7 +74,8 @@ class SubscriptionController {
 
       const result = await SubscriptionService.upgradeSubscription(
         subscription,
-        newPriceId
+        newPriceId,
+        package_reference
       );
       res.json(result);
     } catch (error) {
@@ -84,7 +85,7 @@ class SubscriptionController {
 // downgrade subscription
   async downgradeSubscription(req: Request, res: Response) {
     try {
-      const { userId, newPriceId } = req.body;
+      const { userId, newPriceId,package_reference } = req.body;
       const subscription = await Subscription.findOne({
         where: { user_id: userId },
       });
@@ -95,7 +96,8 @@ class SubscriptionController {
 
       const result = await SubscriptionService.downgradeSubscription(
         subscription,
-        newPriceId
+        newPriceId,
+        package_reference
       );
       res.json(result);
     } catch (error) {

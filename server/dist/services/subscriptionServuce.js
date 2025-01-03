@@ -132,7 +132,7 @@ class SubscriptionService {
         }
     }
     // upgrde subscription
-    async upgradeSubscription(subscription, newPriceId) {
+    async upgradeSubscription(subscription, newPriceId, package_reference) {
         try {
             const stripeSubscription = await stripe_1.stripe.subscriptions.retrieve(subscription.subscription_id);
             const updatedSubscription = await stripe_1.stripe.subscriptions.update(subscription.subscription_id, {
@@ -142,6 +142,14 @@ class SubscriptionService {
                         price: newPriceId,
                     },
                 ],
+            });
+            const newPrice = updatedSubscription.items.data[0].price;
+            const priceAmount = newPrice.unit_amount / 100;
+            await subscriptions_table_1.default.update({
+                package_reference: package_reference,
+                paid_amount: priceAmount,
+            }, {
+                where: { subscription_id: subscription.subscription_id },
             });
             // upgrade in db pass data from frotend like prince and package refrence
             return {
@@ -154,7 +162,7 @@ class SubscriptionService {
         }
     }
     // downgrade subscription 
-    async downgradeSubscription(subscription, newPriceId) {
+    async downgradeSubscription(subscription, newPriceId, package_reference) {
         try {
             const stripeSubscription = await stripe_1.stripe.subscriptions.retrieve(subscription.subscription_id);
             const updatedSubscription = await stripe_1.stripe.subscriptions.update(subscription.subscription_id, {
@@ -166,6 +174,14 @@ class SubscriptionService {
                 ],
             });
             // upgrade in db pass data from frotend like prince and package refrence
+            const newPrice = updatedSubscription.items.data[0].price;
+            const priceAmount = newPrice.unit_amount / 100;
+            await subscriptions_table_1.default.update({
+                package_reference: package_reference,
+                paid_amount: priceAmount,
+            }, {
+                where: { subscription_id: subscription.subscription_id },
+            });
             return {
                 message: 'Subscription downgraded successfully',
                 subscription: updatedSubscription
