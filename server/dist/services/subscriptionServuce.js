@@ -143,6 +143,7 @@ class SubscriptionService {
                     },
                 ],
             });
+            // upgrade in db pass data from frotend like prince and package refrence
             return {
                 message: 'Subscription upgraded successfully',
                 subscription: updatedSubscription
@@ -164,6 +165,7 @@ class SubscriptionService {
                     },
                 ],
             });
+            // upgrade in db pass data from frotend like prince and package refrence
             return {
                 message: 'Subscription downgraded successfully',
                 subscription: updatedSubscription
