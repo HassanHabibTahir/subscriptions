@@ -26,10 +26,10 @@ class SubscriptionController {
         }
     }
     // pakces subscription
-    async getPackages(req, res) {
+    async getPackage(req, res) {
         try {
             const sessionId = req.query.session_id;
-            const packages = await subscriptionServuce_1.default.getPackages(sessionId);
+            const packages = await subscriptionServuce_1.default.getPackage(sessionId);
             res.status(200).json(packages);
         }
         catch (error) {
@@ -98,6 +98,17 @@ class SubscriptionController {
         try {
             console.log("cancelling form subscription");
             res.json("cancelled");
+        }
+        catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+    //
+    // // get all packages from sql 
+    async getAllPakages(req, res) {
+        try {
+            const packages = await subscriptionServuce_1.default.getAllPackages();
+            res.status(200).json(packages);
         }
         catch (error) {
             res.status(500).json({ error: error.message });

@@ -22,7 +22,6 @@ export class AuthService {
   static async signup(body: any) {
     try {
       // const selectedTier = getTierByName(tierName);
-
       const user = await User.create({
         name: body.name,
         email: body.email,
@@ -34,13 +33,14 @@ export class AuthService {
           : body?.email,
         display_name: body?.name,
       });
-
+      
+console.log(body)
       if (body.is_free) {
         await Subscription.create({
           user_id: user.id,
           email: user.email,
           package_title: body.title,
-          package_reference: body.tiers,
+          package_reference: body.tier,
           package_id: body.package_id,
           subscription_id: "",
           mode: "free",

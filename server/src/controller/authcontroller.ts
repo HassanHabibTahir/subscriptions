@@ -8,7 +8,7 @@ class AuthController {
     try {
       
       const body= req.body;
-      console.log(body,"body")
+   
       const user = await AuthService.findUser(body?.email);
       if (user) {
         return res.status(400).json({ error: "Email already exists" });

@@ -7,6 +7,7 @@ const subscriptions_table_1 = __importDefault(require("../model/subscriptions_ta
 const users_models_1 = __importDefault(require("../model/users_models"));
 const stripe_1 = require("../utils/stripe");
 const package_1 = require("../utils/package");
+const packages_table_1 = __importDefault(require("../model/packages_table"));
 class SubscriptionService {
     async createPackage(data) {
         try {
@@ -46,7 +47,7 @@ class SubscriptionService {
             throw new Error(`Error creating subscription: ${error.message}`);
         }
     }
-    async getPackages(sessionId) {
+    async getPackage(sessionId) {
         try {
             // Find user and validate session ID
             const user = await users_models_1.default.findOne({
@@ -300,6 +301,16 @@ class SubscriptionService {
         }
         else {
             console.error(`No subscription found`);
+        }
+    }
+    // get all packages from sql
+    async getAllPackages() {
+        try {
+            const packages = await packages_table_1.default.findAll();
+            return packages;
+        }
+        catch (error) {
+            throw new Error(`Error fetching packages: ${error.message}`);
         }
     }
 }

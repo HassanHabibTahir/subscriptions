@@ -13,10 +13,6 @@ PackageTable.init({
         autoIncrement: true,
         primaryKey: true,
     },
-    user_id: {
-        type: sequelize_1.DataTypes.INTEGER,
-        allowNull: false,
-    },
     title: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: false,

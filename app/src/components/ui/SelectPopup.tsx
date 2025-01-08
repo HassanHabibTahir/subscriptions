@@ -1,4 +1,3 @@
-// components/TailwindSelect.tsx
 import React from 'react';
 
 interface SelectProps {
@@ -17,6 +16,8 @@ const Select: React.FC<SelectProps> = ({ value, onChange, options, label }) => {
         onChange={onChange}
         className="block w-full px-4 py-2 mt-1 text-sm text-gray-700 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
       >
+        <option value="">Select</option>  
+        
         {Object.entries(options).map(([key, label]) => (
           <option key={key} value={key}>
             {label}
@@ -25,6 +26,6 @@ const Select: React.FC<SelectProps> = ({ value, onChange, options, label }) => {
       </select>
     </div>
   );
-}
+};
 
 export default Select;

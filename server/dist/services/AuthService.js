@@ -35,12 +35,13 @@ class AuthService {
                     : body?.email,
                 display_name: body?.name,
             });
+            console.log(body);
             if (body.is_free) {
                 await subscriptions_table_1.default.create({
                     user_id: user.id,
                     email: user.email,
                     package_title: body.title,
-                    package_reference: body.tiers,
+                    package_reference: body.tier,
                     package_id: body.package_id,
                     subscription_id: "",
                     mode: "free",

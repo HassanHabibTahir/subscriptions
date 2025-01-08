@@ -7,7 +7,7 @@ import {
   extractSubscriptionDetails,
   getTierByName,
 } from "../utils/package";
-import PackageTable from "../model/packages_table";
+import Packages from "../model/packages_table";
 import Stripe from "stripe";
 
 type PackageData = {
@@ -59,7 +59,7 @@ class SubscriptionService {
     }
   }
 
-  async getPackages(sessionId: any) {
+  async getPackage(sessionId: any) {
     try {
       // Find user and validate session ID
       const user = await User.findOne({
@@ -351,6 +351,15 @@ async downgradeSubscription(subscription,newPriceId,package_reference){
       console.log(`Subscription cancelled `);
     } else {
       console.error(`No subscription found`);
+    }
+  }
+  // get all packages from sql
+  async getAllPackages() {
+    try {
+      const packages = await Packages.findAll();
+      return packages;
+    } catch (error) {
+      throw new Error(`Error fetching packages: ${error.message}`);
     }
   }
 }

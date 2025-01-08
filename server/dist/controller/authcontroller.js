@@ -5,7 +5,6 @@ class AuthController {
     async signup(req, res) {
         try {
             const body = req.body;
-            console.log(body, "body");
             const user = await AuthService_1.AuthService.findUser(body?.email);
             if (user) {
                 return res.status(400).json({ error: "Email already exists" });
