@@ -143,7 +143,7 @@ export default function SignupPage() {
 
 
       const data = await response.json();
-      console.log("Signup successful:", data);
+      
 
       alert("Signup successful!");
 

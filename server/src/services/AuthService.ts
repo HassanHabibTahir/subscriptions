@@ -34,7 +34,6 @@ export class AuthService {
         display_name: body?.name,
       });
       
-console.log(body)
       if (body.is_free) {
         await Subscription.create({
           user_id: user.id,

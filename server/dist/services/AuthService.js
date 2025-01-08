@@ -35,7 +35,6 @@ class AuthService {
                     : body?.email,
                 display_name: body?.name,
             });
-            console.log(body);
             if (body.is_free) {
                 await subscriptions_table_1.default.create({
                     user_id: user.id,
