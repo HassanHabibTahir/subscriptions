@@ -24,13 +24,13 @@ class SubscriptionService {
     async createPackage(data) {
         try {
             const user = await users_models_1.default.findOne({
-                where: { email: data.email },
+                where: { id: data.userId },
             });
             if (!user) {
                 throw new Error("User not found");
             }
             const session = await stripe_1.stripe.checkout.sessions.create({
-                customer_email: data.email,
+                customer_email: user.email,
                 line_items: [
                     {
                         price: data.priceId,
@@ -52,6 +52,8 @@ class SubscriptionService {
                 package_id: data.package_id,
                 payment_plane: data.condition,
                 membership_type: data.package_reference,
+            }, {
+                where: { user_id: user.id },
             });
             return { url: session?.url, id: session.id };
         }
@@ -89,6 +91,9 @@ class SubscriptionService {
                     expires_at: expiresAt,
                     paid_amount: session.amount_total / 100,
                     payment_status: session?.payment_status,
+                    package_reference: user.membership_type,
+                    package_title: selectedTier.title,
+                    package_id: user.package_id,
                     status: "active",
                 }, {
                     where: { user_id: user.id },
@@ -145,63 +150,45 @@ class SubscriptionService {
         }
     }
     // upgrde subscription
-    async upgradeSubscription(subscription, newPriceId, package_reference) {
+    async upgradeSubscription(subscription, body) {
         try {
+            const expiresAt = await (0, package_1.calculateExpirationDate)(body.condition);
             const stripeSubscription = await stripe_1.stripe.subscriptions.retrieve(subscription.subscription_id);
             const updatedSubscription = await stripe_1.stripe.subscriptions.update(subscription.subscription_id, {
                 items: [
                     {
                         id: stripeSubscription.items.data[0].id,
-                        price: newPriceId,
+                        price: body?.priceId,
                     },
                 ],
             });
             const newPrice = updatedSubscription.items.data[0].price;
             const priceAmount = newPrice.unit_amount / 100;
             await subscriptions_table_1.default.update({
-                package_reference: package_reference,
+                package_reference: body?.package_reference,
                 paid_amount: priceAmount,
+                package_title: body?.title,
+                package_id: body?.package_id,
+                mode: body.condition,
+                expires_at: expiresAt,
             }, {
                 where: { subscription_id: subscription.subscription_id },
             });
-            // upgrade in db pass data from frotend like prince and package refrence
+            await users_models_1.default.update({
+                package_id: body.package_id,
+                payment_plane: body.condition,
+                membership_type: body.package_reference,
+            }, {
+                where: { id: body.userId },
+            });
             return {
-                message: 'Subscription upgraded successfully',
-                subscription: updatedSubscription
+                message: "Subscription upgraded successfully",
+                subscription: updatedSubscription,
+                success: true,
             };
         }
         catch (error) {
             throw new Error(`Error upgrading subscription: ${error.message}`);
-        }
-    }
-    // downgrade subscription 
-    async downgradeSubscription(subscription, newPriceId, package_reference) {
-        try {
-            const stripeSubscription = await stripe_1.stripe.subscriptions.retrieve(subscription.subscription_id);
-            const updatedSubscription = await stripe_1.stripe.subscriptions.update(subscription.subscription_id, {
-                items: [
-                    {
-                        id: stripeSubscription.items.data[0].id,
-                        price: newPriceId,
-                    },
-                ],
-            });
-            // upgrade in db pass data from frotend like prince and package refrence
-            const newPrice = updatedSubscription.items.data[0].price;
-            const priceAmount = newPrice.unit_amount / 100;
-            await subscriptions_table_1.default.update({
-                package_reference: package_reference,
-                paid_amount: priceAmount,
-            }, {
-                where: { subscription_id: subscription.subscription_id },
-            });
-            return {
-                message: 'Subscription downgraded successfully',
-                subscription: updatedSubscription
-            };
-        }
-        catch (error) {
-            throw new Error(`Error downgrading subscription: ${error.message}`);
         }
     }
     async webhook(req, res) {

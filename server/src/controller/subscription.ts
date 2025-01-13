@@ -6,18 +6,12 @@ import Subscription from "../model/subscriptions_table";
 class SubscriptionController {
   async createPackage(req: Request, res: Response) {
     try {
-      const { tierName, email, condition } = req.body;
-      const selectedTier = await getTierByName(tierName);
-      const priceId = await getPriceId(tierName, condition);
+      console.log(req?.body, "body==?");
       const newPackage = await SubscriptionService.createPackage({
-        ...selectedTier,
-        email,
-        condition,
-        priceId,
+        ...req.body,
       });
 
       res.status(201).json(newPackage);
-    
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -29,7 +23,7 @@ class SubscriptionController {
       const sessionId = req.query.session_id;
       const packages = await SubscriptionService.getPackage(sessionId);
       // res.status(200).json(packages);
-      res.redirect(`${'http://localhost:3000'}/subscription`);
+      res.redirect(`${"http://localhost:3000"}/subscription`);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -42,7 +36,6 @@ class SubscriptionController {
   }
 
   // cancel subscription by api
-
   async cancelSubscription(req: Request, res: Response) {
     try {
       const { userId } = req.body;
@@ -54,57 +47,33 @@ class SubscriptionController {
       if (!subscription) {
         return res.status(404).json({ error: "Subscription not found" });
       }
-
       const result = await SubscriptionService.cancelSubscription(subscription);
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   }
-// upgrade subscription
+  // upgrade subscription
   async upgradeSubscription(req: Request, res: Response) {
     try {
-      const { userId ,newPriceId,package_reference} = req.body;
+      const body = req.body;
       const subscription = await Subscription.findOne({
-        where: { user_id: userId },
+        where: { user_id: body?.userId },
       });
-
       if (!subscription) {
         return res.status(404).json({ error: "Subscription not found" });
       }
-
       const result = await SubscriptionService.upgradeSubscription(
         subscription,
-        newPriceId,
-        package_reference
+        body
       );
       res.json(result);
     } catch (error) {
+      console.log(error, "error");
       res.status(500).json({ error: error.message });
     }
   }
-// downgrade subscription
-  async downgradeSubscription(req: Request, res: Response) {
-    try {
-      const { userId, newPriceId,package_reference } = req.body;
-      const subscription = await Subscription.findOne({
-        where: { user_id: userId },
-      });
 
-      if (!subscription) {
-        return res.status(404).json({ error: "Subscription not found" });
-      }
-
-      const result = await SubscriptionService.downgradeSubscription(
-        subscription,
-        newPriceId,
-        package_reference
-      );
-      res.json(result);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  }
   // cancel form stripe subscription
   async stripeCancelSubscription(req: Request, res: Response) {
     try {
@@ -114,8 +83,8 @@ class SubscriptionController {
       res.status(500).json({ error: error.message });
     }
   }
- //
-  // // get all packages from sql 
+  //
+  // // get all packages from sql
   async getAllPakages(req: Request, res: Response) {
     try {
       const packages = await SubscriptionService.getAllPackages();
@@ -124,7 +93,7 @@ class SubscriptionController {
       res.status(500).json({ error: error.message });
     }
   }
-  // getUser 
+  // getUser
   async getUserSubscription(req: Request, res: Response) {
     try {
       const userId = req.query.id;

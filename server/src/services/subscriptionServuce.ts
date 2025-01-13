@@ -1,4 +1,3 @@
-
 import Subscription from "../model/subscriptions_table";
 import User from "../model/users_models";
 import { stripe } from "../utils/stripe";
@@ -10,39 +9,28 @@ import {
 import Packages from "../model/packages_table";
 import Stripe from "stripe";
 
-type PackageData = {
-  title: string;
-  package_reference: string;
-  package_id: number;
-  is_free: boolean;
-  email: string;
-  condition: string;
-  priceId: string;
-};
-
 class SubscriptionService {
-
- //Find user Subscription
-  async findUserSubscription(user_id:any) {
-  try {
-    const user = await Subscription.findOne({
-      where: { user_id:user_id },
-    });
-    return user;
-  } catch (err) {
-    throw new Error(`Error finding user: ${err.message}`);
+  //Find user Subscription
+  async findUserSubscription(user_id: any) {
+    try {
+      const user = await Subscription.findOne({
+        where: { user_id: user_id },
+      });
+      return user;
+    } catch (err) {
+      throw new Error(`Error finding user: ${err.message}`);
+    }
   }
-}
-  async createPackage(data: PackageData) {
+  async createPackage(data: any) {
     try {
       const user = await User.findOne({
-        where: { email: data.email },
+        where: { id: data.userId },
       });
       if (!user) {
         throw new Error("User not found");
       }
       const session = await stripe.checkout.sessions.create({
-        customer_email: data.email,
+        customer_email: user.email,
         line_items: [
           {
             price: data.priceId,
@@ -59,12 +47,18 @@ class SubscriptionService {
           membershipType: data.package_reference,
         },
       });
-      await user.update({
-        paymentSessionId: session.id,
-        package_id: data.package_id,
-        payment_plane: data.condition,
-        membership_type: data.package_reference,
-      });
+      await user.update(
+        {
+          paymentSessionId: session.id,
+          package_id: data.package_id,
+          payment_plane: data.condition,
+          membership_type: data.package_reference,
+        },
+        {
+          where: { user_id: user.id },
+        }
+      );
+
       return { url: session?.url, id: session.id };
     } catch (error) {
       throw new Error(`Error creating subscription: ${error.message}`);
@@ -105,6 +99,9 @@ class SubscriptionService {
             expires_at: expiresAt,
             paid_amount: session.amount_total / 100,
             payment_status: session?.payment_status,
+            package_reference: user.membership_type,
+            package_title: selectedTier.title,
+            package_id: user.package_id,
             status: "active",
           },
           {
@@ -149,11 +146,10 @@ class SubscriptionService {
       const stripeSubscription = await stripe.subscriptions.update(
         subscription.subscription_id,
         {
-            cancel_at_period_end: false, 
-          
+          cancel_at_period_end: false,
         }
       );
-      
+
       await subscription.update({
         status: "canceled",
       });
@@ -166,79 +162,63 @@ class SubscriptionService {
     }
   }
 
-// upgrde subscription
- async upgradeSubscription(subscription,newPriceId,package_reference){
-  try {
-    const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscription_id);
-    const updatedSubscription = await stripe.subscriptions.update(subscription.subscription_id, {
-      items: [
+  // upgrde subscription
+  async upgradeSubscription(
+    subscription,
+  body
+  ) {
+    try {
+      const expiresAt = await calculateExpirationDate(body.condition);
+      const stripeSubscription = await stripe.subscriptions.retrieve(
+        subscription.subscription_id
+      );
+      const updatedSubscription = await stripe.subscriptions.update(
+        subscription.subscription_id,
         {
-          id: stripeSubscription.items.data[0].id,
-          price: newPriceId,
-        },
-      ],
-    });
+          items: [
+            {
+              id: stripeSubscription.items.data[0].id,
+              price: body?.priceId,
+            },
+          ],
+        }
+      );
 
-    const newPrice = updatedSubscription.items.data[0].price;
-    const priceAmount = newPrice.unit_amount / 100;
-    await Subscription.update(
-      {
-        package_reference: package_reference,
-        paid_amount: priceAmount,
-      },
-      {
-        where: { subscription_id: subscription.subscription_id },
-      }
-    );
-// upgrade in db pass data from frotend like prince and package refrence
-
-
-    return {
-      message: 'Subscription upgraded successfully',
-      subscription: updatedSubscription
-    };
-
-  } catch (error) {
-    throw new Error(`Error upgrading subscription: ${error.message}`);
-  }
- }
-
-// downgrade subscription 
-async downgradeSubscription(subscription,newPriceId,package_reference){
-  try {
-    const stripeSubscription = await stripe.subscriptions.retrieve(subscription.subscription_id);
-    const updatedSubscription = await stripe.subscriptions.update(subscription.subscription_id, {
-      items: [
+      const newPrice = updatedSubscription.items.data[0].price;
+      const priceAmount = newPrice.unit_amount / 100;
+      await Subscription.update(
         {
-          id: stripeSubscription.items.data[0].id,
-          price: newPriceId,
+          package_reference: body?.package_reference,
+          paid_amount: priceAmount,
+          package_title:body?.title,
+          package_id:body?.package_id,
+          mode: body.condition,
+          expires_at: expiresAt,
         },
-      ],
-    });
-    // upgrade in db pass data from frotend like prince and package refrence
-    const newPrice = updatedSubscription.items.data[0].price;
-    const priceAmount = newPrice.unit_amount / 100;
-    await Subscription.update(
-      {
-        package_reference: package_reference,
-        paid_amount: priceAmount,
-      },
-      {
-        where: { subscription_id: subscription.subscription_id },
-      }
-    );
-    return {
-      message: 'Subscription downgraded successfully',
-      subscription: updatedSubscription
-    };
+        {
+          where: { subscription_id: subscription.subscription_id },
+        }
+      );
+     await User.update(
+        {
+          package_id: body.package_id,
+          payment_plane: body.condition,
+          membership_type: body.package_reference,
+        },
+        {
+          where: { id: body.userId },
+        }
+      );
 
-  } catch (error) {
-    throw new Error(`Error downgrading subscription: ${error.message}`);
+      return {
+        message: "Subscription upgraded successfully",
+        subscription: updatedSubscription,
+        success: true,
+      };
+    } catch (error) {
+      throw new Error(`Error upgrading subscription: ${error.message}`);
+    }
   }
-  
-
-}
-
 
   async webhook(req: any, res: any) {
     const sig = req.headers["stripe-signature"];

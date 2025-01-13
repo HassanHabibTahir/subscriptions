@@ -59,6 +59,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import SelectPopup from "@/components/ui/SelectPopup";
+import { useRouter } from "next/navigation";
 
 interface FormData {
   name: string;
@@ -67,6 +68,7 @@ interface FormData {
 }
 
 export default function SignupPage() {
+   const { push } = useRouter();
   const [selectedTier, setSelectedTier] = useState<string>("");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [packages, setPackages] = useState<any[]>([]);  // Define a more specific type for the packages
@@ -149,6 +151,7 @@ export default function SignupPage() {
       alert("Signup successful!");
       if (data.subscription) {
         alert(data?.message);
+        push("/subscription")
       } else {
         window.location.replace(data.url);
       
