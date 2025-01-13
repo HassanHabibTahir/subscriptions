@@ -80,3 +80,114 @@ export default router;
 
 This route setup efficiently manages user subscriptions and integrates Stripe events for automated responses.
 
+## 👤 Auth Controller Setup
+
+The `AuthController` class handles user-related operations like signup. It interacts with the `AuthService` to validate user information and manage user records.
+
+```javascript
+import { Request, Response } from "express";
+import User from "../model/users_models";
+import SubscriptionService from "../services/subscriptionServuce";
+import { AuthService } from "../services/AuthService";
+
+class AuthController {
+  async signup(req: Request, res: Response) {
+    try {
+      const body = req.body;
+
+      const user = await AuthService.findUser(body?.email);
+      if (user) {
+        return res.status(400).json({ error: "Email already exists" });
+      }
+      const result = await AuthService.signup(body);
+      res.status(201).json(result);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+}
+
+export default AuthController;
+```
+
+This controller handles user signup by first checking if the user already exists. If not, it creates a new user and returns a success response.
+
+# Subscription Controller
+
+This README provides an overview of the `SubscriptionController` class, which is responsible for handling subscription-related operations in an Express.js application.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Dependencies](#dependencies)
+- [Methods](#methods)
+- [Usage](#usage)
+- [Error Handling](#error-handling)
+
+## Overview
+
+The `SubscriptionController` class manages various subscription-related operations, including creating packages, handling webhooks, canceling subscriptions, upgrading subscriptions, and retrieving subscription information.
+
+## Dependencies
+
+This controller relies on the following dependencies:
+
+- Express.js (for handling HTTP requests and responses)
+- `SubscriptionService` (for business logic related to subscriptions)
+- `Subscription` model (for database operations)
+- Utility functions (`getPriceId`, `getTierByName`)
+
+## Methods
+
+### `createPackage(req: Request, res: Response)`
+
+Creates a new subscription package.
+
+### `getPackage(req: Request, res: Response)`
+
+Retrieves package information and redirects to the subscription page.
+
+### `webhook(req: Request, res: Response)`
+
+Handles webhook events related to subscriptions.
+
+### `cancelSubscription(req: Request, res: Response)`
+
+Cancels a user's subscription.
+
+### `upgradeSubscription(req: Request, res: Response)`
+
+Upgrades a user's subscription.
+
+### `stripeCancelSubscription(req: Request, res: Response)`
+
+Placeholder for handling Stripe subscription cancellations.
+
+### `getAllPakages(req: Request, res: Response)`
+
+Retrieves all available subscription packages.
+
+### `getUserSubscription(req: Request, res: Response)`
+
+Retrieves subscription information for a specific user.
+
+## Usage
+
+To use this controller, you should set up routes in your Express application that map to these methods. For example:
+
+```javascript
+import express from 'express';
+import SubscriptionController from './path/to/SubscriptionController';
+
+const router = express.Router();
+const subscriptionController = new SubscriptionController();
+
+router.post('/package', subscriptionController.createPackage);
+router.get('/package', subscriptionController.getPackage);
+router.post('/webhook', subscriptionController.webhook);
+router.post('/cancel', subscriptionController.cancelSubscription);
+router.post('/upgrade', subscriptionController.upgradeSubscription);
+router.get('/packages', subscriptionController.getAllPakages);
+router.get('/user-subscription', subscriptionController.getUserSubscription);
+
+export default router;
