@@ -101,7 +101,7 @@ await user.update({ is_deleted: true });
 
 # Subscription Model
 
-This README provides an overview of the Subscription model used in the application. The Subscription model represents the structure and behavior of subscription data in the database.
+The Subscription model used in the application. The Subscription model represents the structure and behavior of subscription data in the database.
 
 ## Table of Contents
 
@@ -347,7 +347,7 @@ router.get('/packages', subscriptionController.getAllPakages);
 router.get('/user-subscription', subscriptionController.getUserSubscription);
 
 export default router;
-
+```
 
 # Auth Service
 
@@ -412,7 +412,7 @@ Handles the user signup process, including creating a new user and setting up th
     userId: string,
     subscription: true
   }
-
+```
 # SubscriptionService
 
 The `SubscriptionService` class is responsible for managing subscription-related operations in the application. It handles creating packages, managing subscriptions, processing Stripe webhooks, and interacting with the database.
