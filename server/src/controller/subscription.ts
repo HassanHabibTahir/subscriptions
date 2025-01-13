@@ -7,7 +7,6 @@ class SubscriptionController {
   async createPackage(req: Request, res: Response) {
     try {
       const { tierName, email, condition } = req.body;
-      console.log(tierName, email, "email,tireName");
       const selectedTier = await getTierByName(tierName);
       const priceId = await getPriceId(tierName, condition);
       const newPackage = await SubscriptionService.createPackage({
@@ -18,6 +17,7 @@ class SubscriptionController {
       });
 
       res.status(201).json(newPackage);
+    
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -28,7 +28,8 @@ class SubscriptionController {
     try {
       const sessionId = req.query.session_id;
       const packages = await SubscriptionService.getPackage(sessionId);
-      res.status(200).json(packages);
+      // res.status(200).json(packages);
+      res.redirect(`${'http://localhost:3000'}/subscription`);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -123,7 +124,19 @@ class SubscriptionController {
       res.status(500).json({ error: error.message });
     }
   }
-
+  // getUser 
+  async getUserSubscription(req: Request, res: Response) {
+    try {
+      const userId = req.query.id;
+      const user = await SubscriptionService.findUserSubscription(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.status(200).json(user);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 export default SubscriptionController;

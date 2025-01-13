@@ -10,7 +10,6 @@ class SubscriptionController {
     async createPackage(req, res) {
         try {
             const { tierName, email, condition } = req.body;
-            console.log(tierName, email, "email,tireName");
             const selectedTier = await (0, package_1.getTierByName)(tierName);
             const priceId = await (0, package_1.getPriceId)(tierName, condition);
             const newPackage = await subscriptionServuce_1.default.createPackage({
@@ -30,7 +29,8 @@ class SubscriptionController {
         try {
             const sessionId = req.query.session_id;
             const packages = await subscriptionServuce_1.default.getPackage(sessionId);
-            res.status(200).json(packages);
+            // res.status(200).json(packages);
+            res.redirect(`${'http://localhost:3000'}/subscription`);
         }
         catch (error) {
             res.status(500).json({ error: error.message });
@@ -109,6 +109,20 @@ class SubscriptionController {
         try {
             const packages = await subscriptionServuce_1.default.getAllPackages();
             res.status(200).json(packages);
+        }
+        catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+    // getUser 
+    async getUserSubscription(req, res) {
+        try {
+            const userId = req.query.id;
+            const user = await subscriptionServuce_1.default.findUserSubscription(userId);
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+            res.status(200).json(user);
         }
         catch (error) {
             res.status(500).json({ error: error.message });

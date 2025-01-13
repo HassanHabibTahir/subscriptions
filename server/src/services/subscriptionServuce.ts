@@ -21,6 +21,18 @@ type PackageData = {
 };
 
 class SubscriptionService {
+
+ //Find user Subscription
+  async findUserSubscription(user_id:any) {
+  try {
+    const user = await Subscription.findOne({
+      where: { user_id:user_id },
+    });
+    return user;
+  } catch (err) {
+    throw new Error(`Error finding user: ${err.message}`);
+  }
+}
   async createPackage(data: PackageData) {
     try {
       const user = await User.findOne({

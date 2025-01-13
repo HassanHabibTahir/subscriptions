@@ -37,59 +37,77 @@ const packages = [
 ]
 
 export default function SubscriptionPage() {
+  const userId = localStorage.getItem("user");
   const [yearlyPlans, setYearlyPlans] = useState<{ [key: string]: boolean }>({
     Enthusiast: false,
     Collector: false,
     Elite: false,
-    
-  })
+  });
   const [email, setEmail] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [userSubscription, setUserSubscription] = useState<any>(null);
 
   const togglePlan = (planName: string) => {
-    setYearlyPlans(prev => ({ ...prev, [planName]: !prev[planName] }))
-  }
+    setYearlyPlans(prev => ({ ...prev, [planName]: !prev[planName] }));
+  };
 
   const handleSubscription = async (tierName: string, email: string, isYearly: boolean) => {
     const payload = {
       tierName,
       email,
       condition: isYearly ? 'yearly' : 'monthly',
-    }
+    };
 
     try {
-      console.log(payload,"payload")
+      console.log(payload, "payload");
       const response = await fetch('http://localhost:4000/api/subscription/packages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`)
+        throw new Error(`Error: ${response.statusText}`);
       }
 
-      const data = await response.json()
-      console.log('Subscription response:', data)
+      const data = await response.json();
+      console.log('Subscription response:', data);
+
       if (data.url) {
-        // Redirect to the provided URL
         window.location.href = data.url;
       } else {
         alert(data.message || 'Subscription successful!');
       }
-      alert(data.message)
+
+      alert(data.message);
     } catch (error) {
-      console.error('Subscription failed:', error)
-      alert('Subscription failed. Please try again.')
+      console.error('Subscription failed:', error);
+      alert('Subscription failed. Please try again.');
     }
-  }
+  };
+
   useEffect(() => {
     const storedEmail = localStorage.getItem("userEmail");
     if (storedEmail) {
       setEmail(storedEmail);
-    } 
-  }, []);
+    }
+
+    (async () => {
+      try {
+        if (userId) {
+          console.log(userId, "USERiD");
+          const response = await fetch(`http://localhost:4000/api/subscription/user-subscription?id=${userId}`);
+          const data = await response.json();
+          setUserSubscription(data);
+          console.log(data, "user -------->");
+        }
+      } catch (error) {
+        console.error("Error fetching user subscription:", error);
+      }
+    })();
+  }, [userId]);
 
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -105,11 +123,22 @@ export default function SubscriptionPage() {
 
         <div className="mt-12 grid gap-8 lg:grid-cols-4 lg:gap-x-8 lg:gap-y-12">
           {packages.map((pkg) => (
-            <Card key={pkg.name} className="flex flex-col justify-between">
+            <Card
+              key={pkg.name}
+              className={`flex flex-col justify-between ${
+                userSubscription?.package_reference === pkg.package_reference
+                  ? 'border-4 border-green-500'
+                  : 'border border-gray-200'
+              }`}
+            >
               <CardHeader>
                 <CardTitle>{pkg.name}</CardTitle>
                 <CardDescription>
-                  {pkg.price === 0 ? 'Always free' : (yearlyPlans[pkg.name] ? 'Billed annually' : 'Billed monthly')}
+                  {pkg.price === 0
+                    ? 'Always free'
+                    : yearlyPlans[pkg.name]
+                    ? 'Billed annually'
+                    : 'Billed monthly'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -118,7 +147,8 @@ export default function SubscriptionPage() {
                     'Free'
                   ) : (
                     <>
-                      ${yearlyPlans[pkg.name]
+                      $
+                      {yearlyPlans[pkg.name]
                         ? pkg.yearlyPrice?.toFixed(2) ?? 'N/A'
                         : pkg.monthlyPrice?.toFixed(2) ?? 'N/A'}
                       <span className="text-base font-normal text-gray-500">
@@ -162,17 +192,23 @@ export default function SubscriptionPage() {
                 )}
               </CardContent>
               <CardFooter>
-                <Button
-                  className="w-full"
-                  onClick={() => handleSubscription(pkg.package_reference, email, yearlyPlans[pkg.name])}
-                >
-                  {pkg.price === 0 ? 'Start for Free' : `Subscribe to ${pkg.name}`}
-                </Button>
+                {userSubscription?.package_reference === pkg.package_reference ? (
+                  <span className="text-green-600 font-bold">Purchased</span>
+                ) : (
+                  <Button
+                    className="w-full"
+                    onClick={() =>
+                      handleSubscription(pkg.package_reference, email, yearlyPlans[pkg.name])
+                    }
+                  >
+                    {pkg.price === 0 ? 'Start for Free' : `Subscribe to ${pkg.name}`}
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           ))}
         </div>
       </div>
     </div>
-  )
+  );
 }

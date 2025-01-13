@@ -19,6 +19,8 @@ class AuthController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  
 }
 
 export default   AuthController;

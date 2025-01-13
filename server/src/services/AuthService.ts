@@ -87,24 +87,7 @@ export class AuthService {
           id: session.id,
         };
       }
-      // await PackageTable.create({
-      //   user_id: user.id,
-      //   title: selectedTier.title,
-      //   per_month_charges: 0,
-      //   yearly_per_month_charges: 0,
-      //   package_subscriptionId: "",
-      //   monthly_sub_priceId: "",
-      //   yearly_sub_priceId: "",
-      //   package_reference: "",
-      //   features: selectedTier.package_reference,
-      // });
 
-      //   return {
-      //     message: "User created successfully with free tier",
-      //     userId: user.id,
-      //     subscription: true,
-      //   };
-      // } else {
     } catch (error: any) {
       throw new Error(`Signup error: ${error.message || "Unknown error"}`);
     }

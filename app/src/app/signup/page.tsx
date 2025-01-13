@@ -143,14 +143,16 @@ export default function SignupPage() {
 
 
       const data = await response.json();
+      localStorage.setItem("user", data?.userId);
       
 
       alert("Signup successful!");
-
       if (data.subscription) {
         alert(data?.message);
       } else {
-        window.location.href = data.url;
+        window.location.replace(data.url);
+      
+        // window.location.href = data.url;
         console.log(data);
       }
     } catch (error) {

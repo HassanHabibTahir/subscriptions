@@ -9,6 +9,18 @@ const stripe_1 = require("../utils/stripe");
 const package_1 = require("../utils/package");
 const packages_table_1 = __importDefault(require("../model/packages_table"));
 class SubscriptionService {
+    //Find user Subscription
+    async findUserSubscription(user_id) {
+        try {
+            const user = await subscriptions_table_1.default.findOne({
+                where: { user_id: user_id },
+            });
+            return user;
+        }
+        catch (err) {
+            throw new Error(`Error finding user: ${err.message}`);
+        }
+    }
     async createPackage(data) {
         try {
             const user = await users_models_1.default.findOne({

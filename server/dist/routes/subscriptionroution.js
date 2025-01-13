@@ -21,6 +21,7 @@ router.post("/upgrade-subscription", subscription.upgradeSubscription.bind(subsc
 router.post("/downgrade-subscription", subscription.downgradeSubscription.bind(subscription));
 // cancel response from the stripe
 router.get("/cancel", subscription.stripeCancelSubscription.bind(subscription));
+// get User subscription
+router.get("/user-subscription", subscription.getUserSubscription.bind(subscription));
 router.post("/webhook", express_1.default.raw({ type: "application/json" }), subscription.webhook.bind(subscription));
 exports.default = router;
-// api/subscription/webhook

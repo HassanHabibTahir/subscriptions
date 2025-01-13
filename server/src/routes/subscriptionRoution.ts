@@ -26,11 +26,14 @@ router.post(
 );
 // cancel response from the stripe
 router.get("/cancel", subscription.stripeCancelSubscription.bind(subscription));
+
+// get User subscription
+router.get("/user-subscription", subscription.getUserSubscription.bind(subscription));
+
+
 router.post(
   "/webhook",
   express.raw({ type: "application/json" }),
   subscription.webhook.bind(subscription)
 );
 export default router;
-
-// api/subscription/webhook
