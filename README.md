@@ -7,7 +7,7 @@ First, clone the application repository to your local machine:
 
 ```bash
 git clone <repository-url>
-
+```
 2. Install Required Subscriptions and Packages
 Inside the project directory, add the necessary subscriptions and the packages you want to use. You can add the required packages in the packages table.
 
@@ -27,19 +27,6 @@ Users can upgrade their package directly from the subscription page.
 
 
 This structure provides clear instructions for setting up, running, and managing the Node.js application, including database configuration and subscription management.
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
