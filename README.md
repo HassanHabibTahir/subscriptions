@@ -1,3 +1,50 @@
+# Node.js Application Setup
+
+## Steps to Run the Application
+
+### 1. Clone the Application
+First, clone the application repository to your local machine:
+
+```bash
+git clone <repository-url>
+
+2. Install Required Subscriptions and Packages
+Inside the project directory, add the necessary subscriptions and the packages you want to use. You can add the required packages in the packages table.
+
+3. Configure the Database
+Make sure to configure the database for your application. Ensure that the connection details and settings are properly set in your environment.
+
+4. Run the Frontend
+The frontend should be set up and running as well. The frontend includes two routes:
+
+Subscription Route: Where users can manage their subscriptions.
+Signup Route: Where users can register and sign up for the service.
+5. Subscription Flow
+If a user registers for the first time and selects a starter plan, they will be granted access to the active subscription page.
+If the user upgrades to another package during the signup process, the subscription page will reflect the active plan according to their selection.
+6. Upgrade Subscription
+Users can upgrade their package directly from the subscription page.
+
+
+This structure provides clear instructions for setting up, running, and managing the Node.js application, including database configuration and subscription management.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # 🚀 Express Server Setup (MDX Guide)
 
 This MDX file explains how to set up a basic **Express server** with **Sequelize** for managing database connections and API routes.
