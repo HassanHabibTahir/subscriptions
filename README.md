@@ -412,7 +412,7 @@ Handles the user signup process, including creating a new user and setting up th
     userId: string,
     subscription: true
   }
-```
+
 # SubscriptionService
 
 The `SubscriptionService` class is responsible for managing subscription-related operations in the application. It handles creating packages, managing subscriptions, processing Stripe webhooks, and interacting with the database.
@@ -478,3 +478,4 @@ app.post('/create-package', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+```
