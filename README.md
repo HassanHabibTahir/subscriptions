@@ -120,7 +120,7 @@ const newUser = await User.create({
   password: 'hashedpassword',
   // ... other fields as needed
 });
-
+```
 // Find a user by id
 const user = await User.findByPk(1);
 
@@ -194,7 +194,7 @@ const newSubscription = await Subscription.create({
   status: 'active',
   // ... other fields as needed
 });
-
+```
 // Find a subscription by id
 const subscription = await Subscription.findByPk(1);
 
