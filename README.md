@@ -58,162 +58,6 @@ app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/auth', authRoutes);
 ```
 
-
-# User Model
-
- the User model used in the application. The User model represents the structure and behavior of user data in the database.
-
-## Table of Contents
-
-1. [Model Overview](#model-overview)
-2. [Fields](#fields)
-3. [Usage](#usage)
-4. [Timestamps](#timestamps)
-5. [Sequelize Configuration](#sequelize-configuration)
-
-## Model Overview
-
-The User model is implemented using Sequelize, a popular ORM for Node.js. It extends the Sequelize `Model` class and defines the structure of the `users` table in the database.
-
-## Fields
-
-The User model includes the following fields:
-
-| Field Name          | Type      | Constraints                    | Description                                    |
-|---------------------|-----------|--------------------------------|------------------------------------------------|
-| id                  | INTEGER   | Primary Key, Auto Increment    | Unique identifier for the user                 |
-| type                | STRING    | Not Null                       | Type of user (e.g., 'admin', 'regular')        |
-| name                | STRING    | Not Null                       | Full name of the user                          |
-| username            | STRING    | Not Null, Unique               | Unique username for the user                   |
-| display_name        | STRING    | Not Null                       | Name to be displayed publicly                  |
-| email               | STRING    | Not Null, Unique               | User's email address                           |
-| password            | STRING    | Not Null                       | Hashed password of the user                    |
-| image_url           | STRING    | Nullable                       | URL to the user's profile image                |
-| City                | STRING    | Nullable                       | User's city of residence                       |
-| state               | STRING    | Nullable                       | User's state of residence                      |
-| membership_type     | STRING    | Nullable                       | Type of membership the user has                |
-| payment_plane       | STRING    | Nullable                       | Payment plan of the user                       |
-| package_id          | INTEGER   | Nullable                       | ID of the package associated with the user     |
-| paymentSessionId    | STRING    | Nullable                       | ID of the payment session                      |
-| forget_password_code| STRING    | Nullable                       | Code for password reset functionality          |
-| display_real_name   | BOOLEAN   | Default: true                  | Whether to display the user's real name        |
-| is_deleted          | BOOLEAN   | Default: false                 | Soft delete flag                               |
-| is_verified         | BOOLEAN   | Default: false                 | Whether the user's account is verified         |
-| last_login          | DATE      | Nullable                       | Timestamp of the user's last login             |
-| created_at          | DATE      | Default: Current Timestamp     | Timestamp of when the user was created         |
-| updated_at          | DATE      | Default: Current Timestamp     | Timestamp of the last update to the user       |
-
-## Usage
-
-To use the User model in your application, you can import it and use Sequelize methods to interact with the database. Here are some examples:
-
-```typescript
-import User from './path/to/User';
-
-// Create a new user
-const newUser = await User.create({
-  type: 'regular',
-  name: 'John Doe',
-  username: 'johndoe',
-  display_name: 'John',
-  email: 'john@example.com',
-  password: 'hashedpassword',
-  // ... other fields as needed
-});
-
-// Find a user by id
-const user = await User.findByPk(1);
-
-// Find a user by email
-const userByEmail = await User.findOne({ where: { email: 'john@example.com' } });
-
-// Update a user
-await user.update({ display_name: 'Johnny' });
-
-// Delete a user (soft delete)
-await user.update({ is_deleted: true });
-```
-# Subscription Model
-
-The Subscription model used in the application. The Subscription model represents the structure and behavior of subscription data in the database.
-
-## Table of Contents
-
-1. [Model Overview](#model-overview)
-2. [Fields](#fields)
-3. [Usage](#usage)
-4. [Timestamps](#timestamps)
-5. [Sequelize Configuration](#sequelize-configuration)
-
-## Model Overview
-
-The Subscription model is implemented using Sequelize, a popular ORM for Node.js. It extends the Sequelize `Model` class and defines the structure of the `subscriptions` table in the database.
-
-## Fields
-
-The Subscription model includes the following fields:
-
-| Field Name         | Type      | Constraints                    | Description                                    |
-|--------------------|-----------|--------------------------------|------------------------------------------------|
-| id                 | INTEGER   | Primary Key, Auto Increment    | Unique identifier for the subscription         |
-| user_id            | INTEGER   | Not Null                       | ID of the user associated with the subscription|
-| email              | STRING    | Not Null                       | Email address associated with the subscription |
-| package_title      | STRING    | Not Null                       | Title of the subscribed package                |
-| package_reference  | STRING    | Not Null                       | Reference code for the package                 |
-| package_id         | INTEGER   | Nullable                       | ID of the package (no foreign key constraint)  |
-| subscription_id    | STRING    | Not Null                       | Unique identifier for the subscription         |
-| mode               | STRING    | Not Null                       | Mode of the subscription (e.g., 'monthly')     |
-| expires_at         | DATE      | Not Null                       | Expiration date of the subscription            |
-| paid_amount        | FLOAT     | Not Null                       | Amount paid for the subscription               |
-| payment_status     | STRING    | Not Null                       | Status of the payment                          |
-| status             | STRING    | Not Null                       | Current status of the subscription             |
-| is_deleted         | BOOLEAN   | Default: false                 | Soft delete flag                               |
-| is_verified        | BOOLEAN   | Default: false                 | Verification status of the subscription        |
-| last_login         | DATE      | Nullable                       | Timestamp of the last login (if applicable)    |
-| created_at         | DATE      | Default: Current Timestamp     | Timestamp of when the subscription was created |
-| updated_at         | DATE      | Default: Current Timestamp     | Timestamp of the last update to the subscription |
-
-## Usage
-
-To use the Subscription model in your application, you can import it and use Sequelize methods to interact with the database. Here are some examples:
-
-```typescript
-import Subscription from './path/to/Subscription';
-
-// Create a new subscription
-const newSubscription = await Subscription.create({
-  user_id: 1,
-  email: 'user@example.com',
-  package_title: 'Premium Plan',
-  package_reference: 'PREM001',
-  subscription_id: 'sub_123456',
-  mode: 'monthly',
-  expires_at: new Date('2024-01-01'),
-  paid_amount: 29.99,
-  payment_status: 'paid',
-  status: 'active',
-  // ... other fields as needed
-});
-```
-// Find a subscription by id
-const subscription = await Subscription.findByPk(1);
-
-// Find subscriptions for a specific user
-const userSubscriptions = await Subscription.findAll({ where: { user_id: 1 } });
-
-// Update a subscription
-await subscription.update({ status: 'cancelled' });
-
-// Delete a subscription (soft delete)
-await subscription.update({ is_deleted: true });
-
-
-
-
-
-
-
-
 ## ✏️ Auth Route Setup
 
 The `authRoutes` file handles user authentication logic. Here's a sample route for signing up users:
@@ -513,3 +357,161 @@ app.post('/create-package', async (req, res) => {
   }
 });
 ```
+
+
+
+
+# User Model
+
+ the User model used in the application. The User model represents the structure and behavior of user data in the database.
+
+## Table of Contents
+
+1. [Model Overview](#model-overview)
+2. [Fields](#fields)
+3. [Usage](#usage)
+4. [Timestamps](#timestamps)
+5. [Sequelize Configuration](#sequelize-configuration)
+
+## Model Overview
+
+The User model is implemented using Sequelize, a popular ORM for Node.js. It extends the Sequelize `Model` class and defines the structure of the `users` table in the database.
+
+## Fields
+
+The User model includes the following fields:
+
+| Field Name          | Type      | Constraints                    | Description                                    |
+|---------------------|-----------|--------------------------------|------------------------------------------------|
+| id                  | INTEGER   | Primary Key, Auto Increment    | Unique identifier for the user                 |
+| type                | STRING    | Not Null                       | Type of user (e.g., 'admin', 'regular')        |
+| name                | STRING    | Not Null                       | Full name of the user                          |
+| username            | STRING    | Not Null, Unique               | Unique username for the user                   |
+| display_name        | STRING    | Not Null                       | Name to be displayed publicly                  |
+| email               | STRING    | Not Null, Unique               | User's email address                           |
+| password            | STRING    | Not Null                       | Hashed password of the user                    |
+| image_url           | STRING    | Nullable                       | URL to the user's profile image                |
+| City                | STRING    | Nullable                       | User's city of residence                       |
+| state               | STRING    | Nullable                       | User's state of residence                      |
+| membership_type     | STRING    | Nullable                       | Type of membership the user has                |
+| payment_plane       | STRING    | Nullable                       | Payment plan of the user                       |
+| package_id          | INTEGER   | Nullable                       | ID of the package associated with the user     |
+| paymentSessionId    | STRING    | Nullable                       | ID of the payment session                      |
+| forget_password_code| STRING    | Nullable                       | Code for password reset functionality          |
+| display_real_name   | BOOLEAN   | Default: true                  | Whether to display the user's real name        |
+| is_deleted          | BOOLEAN   | Default: false                 | Soft delete flag                               |
+| is_verified         | BOOLEAN   | Default: false                 | Whether the user's account is verified         |
+| last_login          | DATE      | Nullable                       | Timestamp of the user's last login             |
+| created_at          | DATE      | Default: Current Timestamp     | Timestamp of when the user was created         |
+| updated_at          | DATE      | Default: Current Timestamp     | Timestamp of the last update to the user       |
+
+## Usage
+
+To use the User model in your application, you can import it and use Sequelize methods to interact with the database. Here are some examples:
+
+```typescript
+import User from './path/to/User';
+
+// Create a new user
+const newUser = await User.create({
+  type: 'regular',
+  name: 'John Doe',
+  username: 'johndoe',
+  display_name: 'John',
+  email: 'john@example.com',
+  password: 'hashedpassword',
+  // ... other fields as needed
+});
+
+// Find a user by id
+const user = await User.findByPk(1);
+
+// Find a user by email
+const userByEmail = await User.findOne({ where: { email: 'john@example.com' } });
+
+// Update a user
+await user.update({ display_name: 'Johnny' });
+
+// Delete a user (soft delete)
+await user.update({ is_deleted: true });
+```
+# Subscription Model
+
+The Subscription model used in the application. The Subscription model represents the structure and behavior of subscription data in the database.
+
+## Table of Contents
+
+1. [Model Overview](#model-overview)
+2. [Fields](#fields)
+3. [Usage](#usage)
+4. [Timestamps](#timestamps)
+5. [Sequelize Configuration](#sequelize-configuration)
+
+## Model Overview
+
+The Subscription model is implemented using Sequelize, a popular ORM for Node.js. It extends the Sequelize `Model` class and defines the structure of the `subscriptions` table in the database.
+
+## Fields
+
+The Subscription model includes the following fields:
+
+| Field Name         | Type      | Constraints                    | Description                                    |
+|--------------------|-----------|--------------------------------|------------------------------------------------|
+| id                 | INTEGER   | Primary Key, Auto Increment    | Unique identifier for the subscription         |
+| user_id            | INTEGER   | Not Null                       | ID of the user associated with the subscription|
+| email              | STRING    | Not Null                       | Email address associated with the subscription |
+| package_title      | STRING    | Not Null                       | Title of the subscribed package                |
+| package_reference  | STRING    | Not Null                       | Reference code for the package                 |
+| package_id         | INTEGER   | Nullable                       | ID of the package (no foreign key constraint)  |
+| subscription_id    | STRING    | Not Null                       | Unique identifier for the subscription         |
+| mode               | STRING    | Not Null                       | Mode of the subscription (e.g., 'monthly')     |
+| expires_at         | DATE      | Not Null                       | Expiration date of the subscription            |
+| paid_amount        | FLOAT     | Not Null                       | Amount paid for the subscription               |
+| payment_status     | STRING    | Not Null                       | Status of the payment                          |
+| status             | STRING    | Not Null                       | Current status of the subscription             |
+| is_deleted         | BOOLEAN   | Default: false                 | Soft delete flag                               |
+| is_verified        | BOOLEAN   | Default: false                 | Verification status of the subscription        |
+| last_login         | DATE      | Nullable                       | Timestamp of the last login (if applicable)    |
+| created_at         | DATE      | Default: Current Timestamp     | Timestamp of when the subscription was created |
+| updated_at         | DATE      | Default: Current Timestamp     | Timestamp of the last update to the subscription |
+
+## Usage
+
+To use the Subscription model in your application, you can import it and use Sequelize methods to interact with the database. Here are some examples:
+
+```typescript
+import Subscription from './path/to/Subscription';
+
+// Create a new subscription
+const newSubscription = await Subscription.create({
+  user_id: 1,
+  email: 'user@example.com',
+  package_title: 'Premium Plan',
+  package_reference: 'PREM001',
+  subscription_id: 'sub_123456',
+  mode: 'monthly',
+  expires_at: new Date('2024-01-01'),
+  paid_amount: 29.99,
+  payment_status: 'paid',
+  status: 'active',
+  // ... other fields as needed
+});
+```
+// Find a subscription by id
+const subscription = await Subscription.findByPk(1);
+
+// Find subscriptions for a specific user
+const userSubscriptions = await Subscription.findAll({ where: { user_id: 1 } });
+
+// Update a subscription
+await subscription.update({ status: 'cancelled' });
+
+// Delete a subscription (soft delete)
+await subscription.update({ is_deleted: true });
+
+
+
+
+
+
+
