@@ -120,7 +120,7 @@ const newUser = await User.create({
   password: 'hashedpassword',
   // ... other fields as needed
 });
-```
+
 // Find a user by id
 const user = await User.findByPk(1);
 
@@ -132,7 +132,7 @@ await user.update({ display_name: 'Johnny' });
 
 // Delete a user (soft delete)
 await user.update({ is_deleted: true });
-
+```
 # Subscription Model
 
 The Subscription model used in the application. The Subscription model represents the structure and behavior of subscription data in the database.
