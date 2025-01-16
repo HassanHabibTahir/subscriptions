@@ -25,7 +25,7 @@ export default function SignupPage() {
    const { push } = useRouter();
   const [selectedTier, setSelectedTier] = useState<string>("");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [packages, setPackages] = useState<any[]>([]);  // Define a more specific type for the packages
+  const [packages, setPackages] = useState<any[]>([]); 
   const [subscriptionDuration, setSubscriptionDuration] =
     useState<string>("monthly");
 
@@ -186,7 +186,7 @@ export default function SignupPage() {
               <SelectPopup
                 value={subscriptionDuration}
                 onChange={(e) => setSubscriptionDuration(e.target.value)}
-                options={{ monthly: "Monthly", yearly: "Yearly" }}
+                options={selectedTier==="starter_tier"? { monthly: "Monthly"}:{monthly: "Monthly", yearly: "Yearly" }}
                 label="Select Subscription Duration"
               />
             </div>

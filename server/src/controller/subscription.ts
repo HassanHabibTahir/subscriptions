@@ -6,7 +6,7 @@ import Subscription from "../model/subscriptions_table";
 class SubscriptionController {
   async createPackage(req: Request, res: Response) {
     try {
-      console.log(req?.body, "body==?");
+     
       const newPackage = await SubscriptionService.createPackage({
         ...req.body,
       });
@@ -47,7 +47,7 @@ class SubscriptionController {
       if (!subscription) {
         return res.status(404).json({ error: "Subscription not found" });
       }
-      const result = await SubscriptionService.cancelSubscription(subscription);
+      const result = await SubscriptionService.cancelSubscription(subscription,userId);
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: error.message });

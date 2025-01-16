@@ -64,11 +64,10 @@ export default function SubscriptionPage() {
         });
   
         const data = await response.json();
-      
-        if (data.success) {
+        init();
+        if (data.message) {
           alert(data?.message);
-          // Optionally, refresh the subscription info
-          await     init();
+         
         } else {
           alert("Subscription update failed. Please try again.");
         }
@@ -90,6 +89,23 @@ export default function SubscriptionPage() {
     }
   }
   
+const canceldSubcrptionHandler = async()=>{
+  try {
+    const response = await fetch(`http://localhost:4000/api/subscription/cancel-subscription`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+    const data = await response.json();
+       alert(data?.message);
+      await     init();
+ 
+  } catch (error) {
+    console.log("Subscription cancellation failed:", error);
+    // alert("Subscription cancellation failed. Please try again.");
+  }
+}
+
 
   useEffect(() => {
     const storedEmail = localStorage.getItem("userEmail");
@@ -172,7 +188,11 @@ export default function SubscriptionPage() {
                 </CardContent>
                 <CardFooter>
                   {userSubscription?.package_reference === pkg.package_reference ? (
-                    <span className="text-green-600 font-bold">Purchased</span>
+                    <div className='flex justify-end items-center space-x-7'>
+                      <span className="text-green-600 font-bold">Purchased</span>{" "}
+                       {monthlyPrice !== 0&&<button onClick={canceldSubcrptionHandler} className='p-1 border-[2px] border-[red] text-red-500'>Cancel</button>}
+                    </div>
+
                   ) : (
                     <Button
                       className="w-full"

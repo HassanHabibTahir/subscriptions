@@ -8,7 +8,6 @@ const subscriptions_table_1 = __importDefault(require("../model/subscriptions_ta
 class SubscriptionController {
     async createPackage(req, res) {
         try {
-            console.log(req?.body, "body==?");
             const newPackage = await subscriptionServuce_1.default.createPackage({
                 ...req.body,
             });
@@ -46,7 +45,7 @@ class SubscriptionController {
             if (!subscription) {
                 return res.status(404).json({ error: "Subscription not found" });
             }
-            const result = await subscriptionServuce_1.default.cancelSubscription(subscription);
+            const result = await subscriptionServuce_1.default.cancelSubscription(subscription, userId);
             res.json(result);
         }
         catch (error) {

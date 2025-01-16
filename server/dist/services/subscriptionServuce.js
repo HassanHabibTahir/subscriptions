@@ -132,17 +132,37 @@ class SubscriptionService {
         }
     }
     // cancelSubscriptionService
-    async cancelSubscription(subscription) {
+    async cancelSubscription(subscription, userId) {
         try {
-            const stripeSubscription = await stripe_1.stripe.subscriptions.update(subscription.subscription_id, {
-                cancel_at_period_end: false,
-            });
+            // const stripeSubscription = await stripe.subscriptions.update(
+            //   subscription.subscription_id,
+            //   {
+            //     cancel_at_period_end: true,
+            //   }
+            // );
+            const canceledSubscription = await stripe_1.stripe.subscriptions.cancel(subscription.subscription_id);
             await subscription.update({
                 status: "canceled",
+                package_title: "Starter Tier",
+                package_reference: "starter_tier",
+                mode: "monthly",
+                package_id: 1,
+                expires_at: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+                paid_amount: 0,
+                payment_status: "free",
+            }, {
+                where: { subscription_id: subscription.subscription_id },
+            });
+            await users_models_1.default.update({
+                package_id: 1,
+                payment_plane: "monthly",
+                membership_type: "starter_tier",
+            }, {
+                where: { id: userId },
             });
             return {
                 message: "Subscription has been cancelled instantly.",
-                subscription: stripeSubscription,
+                subscription: canceledSubscription,
             };
         }
         catch (error) {
@@ -211,18 +231,19 @@ class SubscriptionService {
             return res.status(400).json({ error: error });
         }
         try {
+            console.log(event.type, "event", event);
             switch (event.type) {
+                case "customer.subscription.created":
+                    console.log("Subscription created:", event.data.object.status);
+                    break;
                 case "customer.subscription.updated":
-                    console.log("event.type", event.type);
-                    console.log("customer.subscription.paused", JSON.stringify(event.data.object));
+                    console.log("Subscription updated:", event.data.object.status);
                     await this.handleUpdateSubscriptionPauseOrResume(event.data.object);
                     break;
                 case "customer.subscription.deleted":
-                    console.log("customer.subscription.deleted");
                     await this.handleSubscriptionCancelled(event.data.object);
                     break;
                 case "invoice.payment_succeeded":
-                    console.log("invoice.payment_succeeded");
                     await this.handleInvoiceUpdateSubscription(event.data.object);
                     break;
                 default:
@@ -238,7 +259,6 @@ class SubscriptionService {
     // upgrade downgrade or pause  or resume
     async handleUpdateSubscriptionPauseOrResume(invoice) {
         const subscriptionId = invoice?.id;
-        console.log(`updating subscription ${subscriptionId}`);
         try {
             // Retrieve the latest subscription info from Stripe
             const stripeSubscription = await stripe_1.stripe.subscriptions.retrieve(subscriptionId);
@@ -262,45 +282,47 @@ class SubscriptionService {
     }
     // renew subscription if cycle end
     async handleInvoiceUpdateSubscription(invoice) {
-        const subscriptionId = invoice.subscription;
-        const subscription = await subscriptions_table_1.default.findOne({
-            where: { subscription_id: subscriptionId },
-        });
-        if (subscription) {
-            await subscription.update({
-                paid_amount: invoice.amount_paid / 100,
-                payment_status: "paid",
-                last_payment_date: new Date(),
-                expires_at: new Date(invoice.lines.data[0].period.end * 1000),
+        try {
+            const subscriptionId = invoice.subscription;
+            const subscription = await subscriptions_table_1.default.findOne({
+                where: { subscription_id: subscriptionId },
             });
-            console.log("Subscription updated:", {
-                subscription_id: subscriptionId,
-                paid_amount: invoice.amount_paid / 100,
-            });
+            if (subscription) {
+                await subscription.update({
+                    paid_amount: invoice.amount_paid / 100,
+                    payment_status: "paid",
+                    last_payment_date: new Date(),
+                    expires_at: new Date(invoice.lines.data[0].period.end * 1000),
+                });
+            }
+            else {
+                console.error("Subscription not found for ID:", subscriptionId);
+            }
         }
-        else {
-            console.error("Subscription not found for ID:", subscriptionId);
-        }
+        catch (error) { }
     }
     // cancel subscription
     async handleSubscriptionCancelled(subscription) {
-        if (!subscription?.id) {
-            console.error("No subscription id found");
-            return;
-        }
-        const subscriptionRecord = await subscriptions_table_1.default.findOne({
-            where: { subscription_id: subscription?.id },
-        });
-        if (subscriptionRecord) {
-            await subscriptionRecord.update({
-                status: "cancelled",
-                is_deleted: true,
+        try {
+            if (!subscription?.id) {
+                console.error("No subscription id found");
+                return;
+            }
+            const subscriptionRecord = await subscriptions_table_1.default.findOne({
+                where: { subscription_id: subscription?.id },
             });
-            console.log(`Subscription cancelled `);
+            if (subscriptionRecord) {
+                await subscriptionRecord.update({
+                    status: "cancelled",
+                    is_deleted: true,
+                });
+                console.log(`Subscription cancelled `);
+            }
+            else {
+                console.error(`No subscription found`);
+            }
         }
-        else {
-            console.error(`No subscription found`);
-        }
+        catch (error) { }
     }
     // get all packages from sql
     async getAllPackages() {

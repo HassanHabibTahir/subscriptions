@@ -141,21 +141,45 @@ class SubscriptionService {
   }
 
   // cancelSubscriptionService
-  async cancelSubscription(subscription: any) {
+  async cancelSubscription(subscription: any, userId: any) {
     try {
-      const stripeSubscription = await stripe.subscriptions.update(
-        subscription.subscription_id,
+      // const stripeSubscription = await stripe.subscriptions.update(
+      //   subscription.subscription_id,
+      //   {
+      //     cancel_at_period_end: true,
+      //   }
+      // );
+      const canceledSubscription = await stripe.subscriptions.cancel(subscription.subscription_id)
+
+      await subscription.update(
         {
-          cancel_at_period_end: false,
+          status: "canceled",
+          package_title: "Starter Tier",
+          package_reference: "starter_tier",
+          mode: "monthly",
+          package_id: 1,
+          expires_at: new Date(new Date().setMonth(new Date().getMonth() + 1)),
+          paid_amount: 0,
+          payment_status: "free",
+        },
+        {
+          where: { subscription_id: subscription.subscription_id },
+        }
+      );
+      await User.update(
+        {
+          package_id: 1,
+          payment_plane: "monthly",
+          membership_type: "starter_tier",
+        },
+        {
+          where: { id: userId },
         }
       );
 
-      await subscription.update({
-        status: "canceled",
-      });
       return {
         message: "Subscription has been cancelled instantly.",
-        subscription: stripeSubscription,
+        subscription: canceledSubscription,
       };
     } catch (error) {
       throw new Error(`Error fetching packages: ${error.message}`);
@@ -163,10 +187,7 @@ class SubscriptionService {
   }
 
   // upgrde subscription
-  async upgradeSubscription(
-    subscription,
-  body
-  ) {
+  async upgradeSubscription(subscription, body) {
     try {
       const expiresAt = await calculateExpirationDate(body.condition);
       const stripeSubscription = await stripe.subscriptions.retrieve(
@@ -190,8 +211,8 @@ class SubscriptionService {
         {
           package_reference: body?.package_reference,
           paid_amount: priceAmount,
-          package_title:body?.title,
-          package_id:body?.package_id,
+          package_title: body?.title,
+          package_id: body?.package_id,
           mode: body.condition,
           expires_at: expiresAt,
         },
@@ -199,7 +220,7 @@ class SubscriptionService {
           where: { subscription_id: subscription.subscription_id },
         }
       );
-     await User.update(
+      await User.update(
         {
           package_id: body.package_id,
           payment_plane: body.condition,
@@ -243,22 +264,19 @@ class SubscriptionService {
       return res.status(400).json({ error: error });
     }
     try {
+      console.log(event.type, "event", event);
       switch (event.type) {
+        case "customer.subscription.created":
+          console.log("Subscription created:", event.data.object.status);
+          break;
         case "customer.subscription.updated":
-          console.log("event.type", event.type);
-          console.log(
-            "customer.subscription.paused",
-            JSON.stringify(event.data.object)
-          );
+          console.log("Subscription updated:", event.data.object.status);
           await this.handleUpdateSubscriptionPauseOrResume(event.data.object);
           break;
         case "customer.subscription.deleted":
-          console.log("customer.subscription.deleted");
           await this.handleSubscriptionCancelled(event.data.object);
           break;
         case "invoice.payment_succeeded":
-          console.log("invoice.payment_succeeded");
-
           await this.handleInvoiceUpdateSubscription(event.data.object);
           break;
         default:
@@ -274,7 +292,6 @@ class SubscriptionService {
   // upgrade downgrade or pause  or resume
   private async handleUpdateSubscriptionPauseOrResume(invoice) {
     const subscriptionId = invoice?.id;
-    console.log(`updating subscription ${subscriptionId}`);
 
     try {
       // Retrieve the latest subscription info from Stripe
@@ -305,45 +322,44 @@ class SubscriptionService {
   // renew subscription if cycle end
 
   private async handleInvoiceUpdateSubscription(invoice: Stripe.Invoice) {
-    const subscriptionId = invoice.subscription as string;
-    const subscription = await Subscription.findOne({
-      where: { subscription_id: subscriptionId },
-    });
-    if (subscription) {
-      await subscription.update({
-        paid_amount: invoice.amount_paid / 100,
-        payment_status: "paid",
-        last_payment_date: new Date(),
-        expires_at: new Date(invoice.lines.data[0].period.end * 1000),
+    try {
+      const subscriptionId = invoice.subscription as string;
+      const subscription = await Subscription.findOne({
+        where: { subscription_id: subscriptionId },
       });
-
-      console.log("Subscription updated:", {
-        subscription_id: subscriptionId,
-        paid_amount: invoice.amount_paid / 100,
-      });
-    } else {
-      console.error("Subscription not found for ID:", subscriptionId);
-    }
+      if (subscription) {
+        await subscription.update({
+          paid_amount: invoice.amount_paid / 100,
+          payment_status: "paid",
+          last_payment_date: new Date(),
+          expires_at: new Date(invoice.lines.data[0].period.end * 1000),
+        });
+      } else {
+        console.error("Subscription not found for ID:", subscriptionId);
+      }
+    } catch (error) {}
   }
 
   // cancel subscription
   private async handleSubscriptionCancelled(subscription) {
-    if (!subscription?.id) {
-      console.error("No subscription id found");
-      return;
-    }
-    const subscriptionRecord = await Subscription.findOne({
-      where: { subscription_id: subscription?.id },
-    });
-    if (subscriptionRecord) {
-      await subscriptionRecord.update({
-        status: "cancelled",
-        is_deleted: true,
+    try {
+      if (!subscription?.id) {
+        console.error("No subscription id found");
+        return;
+      }
+      const subscriptionRecord = await Subscription.findOne({
+        where: { subscription_id: subscription?.id },
       });
-      console.log(`Subscription cancelled `);
-    } else {
-      console.error(`No subscription found`);
-    }
+      if (subscriptionRecord) {
+        await subscriptionRecord.update({
+          status: "cancelled",
+          is_deleted: true,
+        });
+        console.log(`Subscription cancelled `);
+      } else {
+        console.error(`No subscription found`);
+      }
+    } catch (error) {}
   }
   // get all packages from sql
   async getAllPackages() {
