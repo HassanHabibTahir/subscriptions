@@ -28,6 +28,29 @@ Users can upgrade their package directly from the subscription page.
 
 This structure provides clear instructions for setting up, running, and managing the Node.js application, including database configuration and subscription management.
 
+# Stripe Integration Guide
+
+## Steps:
+
+### 1. Create a Stripe Account
+
+First, you need to create an account on Stripe.
+
+### 2. Add Your Product to Stripe
+
+After creating your account, add your product to Stripe.
+
+### 3. Add Product Price and Amount to SQL Table
+
+Once the product is added, make sure to add the product price and amount to your SQL table.
+
+### 4. Add Webhook in Stripe
+
+Set up a webhook in Stripe to handle events like payment success, failure, etc.
+
+### 5. Add Webhook Signature to Environment Variables
+
+Get the Stripe webhook signature and copy it. Then, add this signature to your environment variables for secure processing.
 
 
 
